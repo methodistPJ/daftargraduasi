@@ -1,0 +1,68 @@
+{
+  "environment": "Loopback-only dummy-data adapter; not production Google/Cloudflare",
+  "at": "2026-10-28T02:08:35.789Z",
+  "passed": 15,
+  "failed": 0,
+  "results": [
+    {
+      "name": "Preview serves real frontend and clearly marks dummy data",
+      "status": "PASS"
+    },
+    {
+      "name": "Dashboard rejects unauthenticated access",
+      "status": "PASS"
+    },
+    {
+      "name": "One-guardian registration and retry reserve exactly one place",
+      "status": "PASS"
+    },
+    {
+      "name": "Immediate receipt remains pending without double-reserving",
+      "status": "PASS"
+    },
+    {
+      "name": "Organizer verifies receipt and converts reserved place to confirmed",
+      "status": "PASS"
+    },
+    {
+      "name": "Returning parent authentication rejects incorrect access code",
+      "status": "PASS"
+    },
+    {
+      "name": "Adding guardian charges only RM30 additional and preserves receipt history",
+      "status": "PASS"
+    },
+    {
+      "name": "Additional receipt and verification settle balance with two history entries",
+      "status": "PASS"
+    },
+    {
+      "name": "Removing guardian preserves payment and flags overpayment",
+      "status": "PASS"
+    },
+    {
+      "name": "Concurrent final-seat requests accept only one, full quota rejects additional guardians",
+      "status": "PASS"
+    },
+    {
+      "name": "Student-only registration remains possible at full guardian quota",
+      "status": "PASS"
+    },
+    {
+      "name": "Parent views never expose access hashes or private Drive IDs",
+      "status": "PASS"
+    },
+    {
+      "name": "Admin exports require authorization and preserve current records",
+      "status": "PASS"
+    },
+    {
+      "name": "Registration close is enforced while existing contact corrections remain available",
+      "status": "PASS"
+    },
+    {
+      "name": "Resetting access invalidates old session and permits the new recovery code",
+      "status": "PASS"
+    }
+  ]
+}

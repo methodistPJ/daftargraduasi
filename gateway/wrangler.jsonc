@@ -1,0 +1,9 @@
+{
+  "name": "the-wonder-years-2026-api",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-10-28",
+  "workers_dev": true,
+  "vars": {"ALLOWED_ORIGINS": "https://methodistpj.github.io"},
+  "ratelimits": [{"name": "API_RATE_LIMITER", "namespace_id": "20261202", "simple": {"limit": 40, "period": 60}}],
+  "observability": {"enabled": false}
+}

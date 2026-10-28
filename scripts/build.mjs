@@ -1,0 +1,10 @@
+import fs from 'node:fs/promises';import path from 'node:path';import {fileURLToPath} from 'node:url';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+await fs.rm(path.join(root,'dist'),{recursive:true,force:true});await fs.cp(path.join(root,'frontend'),path.join(root,'dist'),{recursive:true});
+for (const f of ['qa-viewports.html','qa-viewports.css','qa-viewports.js']) await fs.rm(path.join(root,'dist',f),{force:true});
+const apiBase=process.env.TWY_API_BASE||'',googleClientId=process.env.TWY_GOOGLE_CLIENT_ID||'';
+if(apiBase&&!/^https:\/\/[a-z0-9.-]+\.workers\.dev\/api$/.test(apiBase))throw new Error('TWY_API_BASE must be an HTTPS workers.dev /api endpoint.');
+await fs.writeFile(path.join(root,'dist/config.js'),'window.TWY_CONFIG = '+JSON.stringify({apiBase,googleClientId,preview:false})+';\n');
+await fs.writeFile(path.join(root,'dist/.nojekyll'),'');
+await fs.copyFile(path.join(root,'backend/domain.js'),path.join(root,'backend/apps-script/Domain.gs'));
+console.log('Built static frontend and Apps Script shared domain. No roster or secrets included.');

@@ -1,0 +1,424 @@
+TAP version 13
+# Subtest: actual Apps Script handler checks HMAC and always releases lock
+ok 1 - actual Apps Script handler checks HMAC and always releases lock
+  ---
+  duration_ms: 1.899541
+  type: 'test'
+  ...
+# Subtest: actual handler rejects replayed signed envelope
+ok 2 - actual handler rejects replayed signed envelope
+  ---
+  duration_ms: 2.065583
+  type: 'test'
+  ...
+# Subtest: actual handler registration, retry and recovery code are stable and quota remains one
+ok 3 - actual handler registration, retry and recovery code are stable and quota remains one
+  ---
+  duration_ms: 1.111833
+  type: 'test'
+  ...
+# Subtest: returning authentication requires all three factors; student name or reference alone fails
+ok 4 - returning authentication requires all three factors; student name or reference alone fails
+  ---
+  duration_ms: 0.660334
+  type: 'test'
+  ...
+# Subtest: parent session is scoped to one registration; unauthenticated parent access fails
+ok 5 - parent session is scoped to one registration; unauthenticated parent access fails
+  ---
+  duration_ms: 0.587
+  type: 'test'
+  ...
+# Subtest: admin allowlist is checked in backend even when gateway-signed identity says admin
+ok 6 - admin allowlist is checked in backend even when gateway-signed identity says admin
+  ---
+  duration_ms: 0.467792
+  type: 'test'
+  ...
+# Subtest: Apps Script search rate limit is enforced independently of gateway
+ok 7 - Apps Script search rate limit is enforced independently of gateway
+  ---
+  duration_ms: 0.982417
+  type: 'test'
+  ...
+# Subtest: receipt MIME spoof, oversized data, active PDF and PNG dimension bomb are rejected
+ok 8 - receipt MIME spoof, oversized data, active PDF and PNG dimension bomb are rejected
+  ---
+  duration_ms: 0.67475
+  type: 'test'
+  ...
+# Subtest: receipt hash uses actual bytes and is independent of filename
+ok 9 - receipt hash uses actual bytes and is independent of filename
+  ---
+  duration_ms: 0.421709
+  type: 'test'
+  ...
+# Subtest: privacy checks inspect later permission pages and reject a broad grant
+ok 10 - privacy checks inspect later permission pages and reject a broad grant
+  ---
+  duration_ms: 0.372583
+  type: 'test'
+  ...
+# Subtest: limited-access inherited metadata visibility is not mistaken for access to contents
+ok 11 - limited-access inherited metadata visibility is not mistaken for access to contents
+  ---
+  duration_ms: 0.262375
+  type: 'test'
+  ...
+# Subtest: database privacy rejects original roster ID and wrong-parent app workbook
+ok 12 - database privacy rejects original roster ID and wrong-parent app workbook
+  ---
+  duration_ms: 0.748667
+  type: 'test'
+  ...
+# Subtest: same-name pupils across classes retain separate immutable IDs on sync
+ok 13 - same-name pupils across classes retain separate immutable IDs on sync
+  ---
+  duration_ms: 0.444042
+  type: 'test'
+  ...
+# Subtest: unique student class correction preserves existing immutable ID
+ok 14 - unique student class correction preserves existing immutable ID
+  ---
+  duration_ms: 0.301708
+  type: 'test'
+  ...
+# Subtest: state chunks are lossless and never split a Unicode surrogate pair
+ok 15 - state chunks are lossless and never split a Unicode surrogate pair
+  ---
+  duration_ms: 0.382417
+  type: 'test'
+  ...
+# Subtest: commit uses one atomic Sheets request containing every mirror and canonical state, string values never formulas
+ok 16 - commit uses one atomic Sheets request containing every mirror and canonical state, string values never formulas
+  ---
+  duration_ms: 0.428208
+  type: 'test'
+  ...
+# Subtest: access recovery requires organizer identity check and invalidates old parent sessions
+ok 17 - access recovery requires organizer identity check and invalidates old parent sessions
+  ---
+  duration_ms: 1.218709
+  type: 'test'
+  ...
+# Subtest: ambiguous successful receipt commit reconciles fresh state and retains the valid Drive file
+ok 18 - ambiguous successful receipt commit reconciles fresh state and retains the valid Drive file
+  ---
+  duration_ms: 1.114125
+  type: 'test'
+  ...
+# Subtest: official initial event settings and fees are correct; production registration starts closed
+ok 19 - official initial event settings and fees are correct; production registration starts closed
+  ---
+  duration_ms: 0.443833
+  type: 'test'
+  ...
+# Subtest: student search matches partial names and classes, minimum three chars and at most six results
+ok 20 - student search matches partial names and classes, minimum three chars and at most six results
+  ---
+  duration_ms: 0.545375
+  type: 'test'
+  ...
+# Subtest: unknown student rejected
+ok 21 - unknown student rejected
+  ---
+  duration_ms: 0.6945
+  type: 'test'
+  ...
+# Subtest: student-only registration collects contact but uses no guardian quota
+ok 22 - student-only registration collects contact but uses no guardian quota
+  ---
+  duration_ms: 0.270666
+  type: 'test'
+  ...
+# Subtest: one guardian costs RM130 and reserves one seat
+ok 23 - one guardian costs RM130 and reserves one seat
+  ---
+  duration_ms: 0.1345
+  type: 'test'
+  ...
+# Subtest: four guardians cost RM220 and reserve exactly four places
+ok 24 - four guardians cost RM220 and reserve exactly four places
+  ---
+  duration_ms: 0.0845
+  type: 'test'
+  ...
+# Subtest: guardian limit is configurable and validated on server
+ok 25 - guardian limit is configurable and validated on server
+  ---
+  duration_ms: 0.631208
+  type: 'test'
+  ...
+# Subtest: guardian names and student-only phone are mandatory
+ok 26 - guardian names and student-only phone are mandatory
+  ---
+  duration_ms: 0.082083
+  type: 'test'
+  ...
+# Subtest: same request retried is idempotent, new request for same student rejected
+ok 27 - same request retried is idempotent, new request for same student rejected
+  ---
+  duration_ms: 0.112542
+  type: 'test'
+  ...
+# Subtest: reusing idempotency key with changed content rejected
+ok 28 - reusing idempotency key with changed content rejected
+  ---
+  duration_ms: 0.102667
+  type: 'test'
+  ...
+# Subtest: full quota rejects guardian registration but still accepts student-only
+ok 29 - full quota rejects guardian registration but still accepts student-only
+  ---
+  duration_ms: 0.0975
+  type: 'test'
+  ...
+# Subtest: receipt upload never confirms payment or reserves seats twice
+ok 30 - receipt upload never confirms payment or reserves seats twice
+  ---
+  duration_ms: 0.155458
+  type: 'test'
+  ...
+# Subtest: receipt retry is idempotent and receipt hash cannot be reused for a different record
+ok 31 - receipt retry is idempotent and receipt hash cannot be reused for a different record
+  ---
+  duration_ms: 0.181541
+  type: 'test'
+  ...
+# Subtest: receipt idempotency rejects changed amount
+ok 32 - receipt idempotency rejects changed amount
+  ---
+  duration_ms: 0.060291
+  type: 'test'
+  ...
+# Subtest: verification moves reserved to confirmed without changing availability
+ok 33 - verification moves reserved to confirmed without changing availability
+  ---
+  duration_ms: 0.109917
+  type: 'test'
+  ...
+# Subtest: partial payment confirms only paid guardian portion
+ok 34 - partial payment confirms only paid guardian portion
+  ---
+  duration_ms: 0.0635
+  type: 'test'
+  ...
+# Subtest: adding guardian after verified RM160 produces RM30 outstanding, preserves old payments
+ok 35 - adding guardian after verified RM160 produces RM30 outstanding, preserves old payments
+  ---
+  duration_ms: 0.191375
+  type: 'test'
+  ...
+# Subtest: additional payment settles the balance with a second history entry
+ok 36 - additional payment settles the balance with a second history entry
+  ---
+  duration_ms: 0.082125
+  type: 'test'
+  ...
+# Subtest: removing guardians releases places and flags overpayment without refund
+ok 37 - removing guardians releases places and flags overpayment without refund
+  ---
+  duration_ms: 0.06275
+  type: 'test'
+  ...
+# Subtest: adding guardians is rejected if final quota is unavailable
+ok 38 - adding guardians is rejected if final quota is unavailable
+  ---
+  duration_ms: 0.055875
+  type: 'test'
+  ...
+# Subtest: update retry does not duplicate guardian rows or consume extra seats
+ok 39 - update retry does not duplicate guardian rows or consume extra seats
+  ---
+  duration_ms: 0.0465
+  type: 'test'
+  ...
+# Subtest: guardian IDs belonging to another registration cannot be used
+ok 40 - guardian IDs belonging to another registration cannot be used
+  ---
+  duration_ms: 0.049167
+  type: 'test'
+  ...
+# Subtest: manual release frees unpaid places and never automatically deletes a registration
+ok 41 - manual release frees unpaid places and never automatically deletes a registration
+  ---
+  duration_ms: 0.046292
+  type: 'test'
+  ...
+# Subtest: contact update after manual release preserves released state and does not require available seats
+ok 42 - contact update after manual release preserves released state and does not require available seats
+  ---
+  duration_ms: 0.049416
+  type: 'test'
+  ...
+# Subtest: explicit re-reservation respects current quota
+ok 43 - explicit re-reservation respects current quota
+  ---
+  duration_ms: 0.051791
+  type: 'test'
+  ...
+# Subtest: confirmed guardian places cannot be released as unpaid
+ok 44 - confirmed guardian places cannot be released as unpaid
+  ---
+  duration_ms: 0.050666
+  type: 'test'
+  ...
+# Subtest: receipt rejection changes neither verified amount nor quota
+ok 45 - receipt rejection changes neither verified amount nor quota
+  ---
+  duration_ms: 0.040041
+  type: 'test'
+  ...
+# Subtest: exact verification retry succeeds but different amount cannot silently replace verified payment
+ok 46 - exact verification retry succeeds but different amount cannot silently replace verified payment
+  ---
+  duration_ms: 0.051958
+  type: 'test'
+  ...
+# Subtest: capacity cannot be reduced below held seats
+ok 47 - capacity cannot be reduced below held seats
+  ---
+  duration_ms: 0.064166
+  type: 'test'
+  ...
+# Subtest: opening or remaining open requires complete final bank settings
+ok 48 - opening or remaining open requires complete final bank settings
+  ---
+  duration_ms: 0.059542
+  type: 'test'
+  ...
+# Subtest: registration closes at midnight Malaysia time after deadline
+ok 49 - registration closes at midnight Malaysia time after deadline
+  ---
+  duration_ms: 0.042916
+  type: 'test'
+  ...
+# Subtest: contact edits are possible after deadline but new guardian reservation is not
+ok 50 - contact edits are possible after deadline but new guardian reservation is not
+  ---
+  duration_ms: 0.06825
+  type: 'test'
+  ...
+# Subtest: audit avoids logging contact details and access hashes; public settings expose no students
+ok 51 - audit avoids logging contact details and access hashes; public settings expose no students
+  ---
+  duration_ms: 0.05575
+  type: 'test'
+  ...
+# Subtest: dashboard distinguishes registered, unregistered, pending receipts and verified collections
+ok 52 - dashboard distinguishes registered, unregistered, pending receipts and verified collections
+  ---
+  duration_ms: 0.095291
+  type: 'test'
+  ...
+# Subtest: failed cloned-state transaction does not consume counter or seats
+ok 53 - failed cloned-state transaction does not consume counter or seats
+  ---
+  duration_ms: 0.081958
+  type: 'test'
+  ...
+# Subtest: concurrent final-seat requests under serialized lock accept only one
+ok 54 - concurrent final-seat requests under serialized lock accept only one
+  ---
+  duration_ms: 7.929416
+  type: 'test'
+  ...
+# Subtest: integrity rejects orphan rows and duplicate student registrations
+ok 55 - integrity rejects orphan rows and duplicate student registrations
+  ---
+  duration_ms: 0.122708
+  type: 'test'
+  ...
+# Subtest: unconfigured production gateway fails closed
+ok 56 - unconfigured production gateway fails closed
+  ---
+  duration_ms: 11.295875
+  type: 'test'
+  ...
+# Subtest: foreign origin rejected before upstream
+ok 57 - foreign origin rejected before upstream
+  ---
+  duration_ms: 0.189667
+  type: 'test'
+  ...
+# Subtest: unknown action and non-POST request rejected
+ok 58 - unknown action and non-POST request rejected
+  ---
+  duration_ms: 0.240375
+  type: 'test'
+  ...
+# Subtest: signed envelope has server controlled identity and HMAC, client role ignored
+ok 59 - signed envelope has server controlled identity and HMAC, client role ignored
+  ---
+  duration_ms: 4.206166
+  type: 'test'
+  ...
+# Subtest: parent route requires opaque session token, not a student ID
+ok 60 - parent route requires opaque session token, not a student ID
+  ---
+  duration_ms: 0.428542
+  type: 'test'
+  ...
+# Subtest: public caller cannot access dashboard without valid Google ID token
+ok 61 - public caller cannot access dashboard without valid Google ID token
+  ---
+  duration_ms: 0.337292
+  type: 'test'
+  ...
+# Subtest: forged JWT, alg none and wrong audience are rejected
+ok 62 - forged JWT, alg none and wrong audience are rejected
+  ---
+  duration_ms: 0.247584
+  type: 'test'
+  ...
+# Subtest: rate limit failure does not touch upstream
+ok 63 - rate limit failure does not touch upstream
+  ---
+  duration_ms: 0.331667
+  type: 'test'
+  ...
+# Subtest: upstream network/HTML failure is safe and does not expose internal URLs or errors
+ok 64 - upstream network/HTML failure is safe and does not expose internal URLs or errors
+  ---
+  duration_ms: 0.367625
+  type: 'test'
+  ...
+# Subtest: upstream quota error retains 409 and readable remaining-place message
+ok 65 - upstream quota error retains 409 and readable remaining-place message
+  ---
+  duration_ms: 0.500333
+  type: 'test'
+  ...
+# Subtest: credential-bearing CORS stays exact and never wildcard
+ok 66 - credential-bearing CORS stays exact and never wildcard
+  ---
+  duration_ms: 0.362125
+  type: 'test'
+  ...
+# Subtest: honeypot and invalid JSON rejected before upstream
+ok 67 - honeypot and invalid JSON rejected before upstream
+  ---
+  duration_ms: 0.198
+  type: 'test'
+  ...
+# Subtest: valid signed Google admin token is verified against fetched RSA public key
+ok 68 - valid signed Google admin token is verified against fetched RSA public key
+  ---
+  duration_ms: 34.946375
+  type: 'test'
+  ...
+# Subtest: bounded stream rejects oversized chunked body before forwarding
+ok 69 - bounded stream rejects oversized chunked body before forwarding
+  ---
+  duration_ms: 0.347375
+  type: 'test'
+  ...
+1..69
+# tests 69
+# suites 0
+# pass 69
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 87.002792

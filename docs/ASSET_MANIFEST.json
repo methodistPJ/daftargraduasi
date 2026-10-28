@@ -1,0 +1,105 @@
+{
+  "brand": "THE WONDER YEARS 2026",
+  "logo_policy": "Locked original masters preserved; display assets scaled proportionally from supplied raster files, not redrawn or true vector.",
+  "primary_master": {
+    "file": "Primary_transparent_4x_upscaled_NOT_VECTOR.png",
+    "sha256": "3cc1c3decb5c9c7a02f436fa8092f7f52fb0b8d0e4c815c61bd94aa461f1ec57"
+  },
+  "assets": [
+    {
+      "file": "Montserrat.ttf",
+      "bytes": 744936,
+      "sha256": "0f7b311b2f3279e4eef9b2f968bcdbab6e28f4daeb1f049f4f278a902bcd82f7"
+    },
+    {
+      "file": "OFL-Montserrat.txt",
+      "bytes": 4400,
+      "sha256": "8b7141c03fa4f8d44e6345d5d4931709290f0f67875e452e95ac1fd3a027802e"
+    },
+    {
+      "file": "OFL-PlayfairDisplay.txt",
+      "bytes": 4449,
+      "sha256": "566be814f8e96e93dfa16101331557eb6b5467e9e03f627c0910fe93ca12300e"
+    },
+    {
+      "file": "PlayfairDisplay.ttf",
+      "bytes": 300724,
+      "sha256": "c40f2293766a503bc70cce9e512ef844a4ccb7cbcde792fe2ea31d191917d8d6"
+    },
+    {
+      "file": "dresscode-guardians.webp",
+      "bytes": 199010,
+      "sha256": "d8ac77d9c402f0f4714cb2f642bd0814ca7ad8dc2257b154cf4b0dafb8ddfee1"
+    },
+    {
+      "file": "dresscode-students.webp",
+      "bytes": 207312,
+      "sha256": "67f536629156ee30cdeba1106bfde54db8d89d1ed51294f3d7bf9c309dbbc42e"
+    },
+    {
+      "file": "guardians-1.webp",
+      "bytes": 32698,
+      "sha256": "a00dc2bbcea182db068a09f26e9622620cf5bfc4e53f22afd08588702b1c9db3"
+    },
+    {
+      "file": "guardians-2.webp",
+      "bytes": 33480,
+      "sha256": "32a92d8c20006ce78906f6ae75552ba92148ccc92ab0a225e73cc184c2b16106"
+    },
+    {
+      "file": "guardians-3.webp",
+      "bytes": 29078,
+      "sha256": "0b418707fec180422400c032f2a627c26b43b369a8fa82d782527fee8a20d049"
+    },
+    {
+      "file": "guardians-4.webp",
+      "bytes": 25162,
+      "sha256": "9baced9f49ba0ccd06bda239e3aef7f2da4668508156136d8ee9eb0327f31dd2"
+    },
+    {
+      "file": "guardians-5.webp",
+      "bytes": 42446,
+      "sha256": "cb69193219821411665c4556e0ffe179ed46214da1c483cc94e42995ad28bf42"
+    },
+    {
+      "file": "logo-primary.webp",
+      "bytes": 1098178,
+      "sha256": "09b7ea7eb2b3db8bae9d67e3bc8fbba104cc47269a82e226034d67df11de2ff5"
+    },
+    {
+      "file": "logo-secondary.webp",
+      "bytes": 288102,
+      "sha256": "897769caf7c546b679c7c40270180b86ae4e1242851ce1df8cc79f35f3a162e2"
+    },
+    {
+      "file": "school-graduates.webp",
+      "bytes": 433768,
+      "sha256": "740224c6309a6274a9c31d9cf68180c13e9faaf222f466381d34e4cf1f50224a"
+    },
+    {
+      "file": "school-panorama.webp",
+      "bytes": 497942,
+      "sha256": "6de26688fc65302111cef59781132b9d8b2541e34d107f14315d039d85541e0f"
+    },
+    {
+      "file": "students-1.webp",
+      "bytes": 39318,
+      "sha256": "964b12cffac38c93fa989f7873a3bb063263af9ad89fd2369ca4af6532068cb8"
+    },
+    {
+      "file": "students-2.webp",
+      "bytes": 28770,
+      "sha256": "7f89606bfc6044efb39942eaea0e7978a0c6762c06462bd5669c19178ddb8554"
+    },
+    {
+      "file": "students-3.webp",
+      "bytes": 40868,
+      "sha256": "79926a62929c7f5b812d941468457bd43492db3102dd297ff640c77b5c8637bf"
+    },
+    {
+      "file": "students-4.webp",
+      "bytes": 43140,
+      "sha256": "04e1b1eea219774505fbc051da01f89bef524c9a794ca1072846ac8adfa65d77"
+    }
+  ]
+}

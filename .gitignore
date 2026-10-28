@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+.dev.vars
+.clasp.json
+.clasprc.json
+.wrangler/
+node_modules/
+private/
+*.local.json
+coverage/
+test-results/
