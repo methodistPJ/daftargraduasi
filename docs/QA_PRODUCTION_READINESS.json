@@ -1,0 +1,18 @@
+{
+  "liveUrl": "https://methodistpj.github.io/daftargraduasi/",
+  "registrationOpen": true,
+  "initialStudentCount": 56,
+  "initialAvailableSeats": 100,
+  "googleOrganizerLoginVerified": true,
+  "organizerBackupVerified": true,
+  "productionTestRecordsCreated": 0,
+  "automatedTestsPassed": 69,
+  "localHTTPScenariosPassed": 15,
+  "realDummyIntegrationScenariosPassed": 8,
+  "liveFourGuardianSummaryRM": 220,
+  "responsiveWidthsWithoutHorizontalOverflow": [
+    390,
+    768
+  ],
+  "bankReference": "123 GRADUASI"
+}

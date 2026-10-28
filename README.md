@@ -1,6 +1,10 @@
 # The Wonder Years 2026 — Graduation Portal
 
-Production target: GitHub Pages frontend → Cloudflare Workers gateway → Google Apps Script → Google Sheets / restricted Google Drive.
+Live portal: https://methodistpj.github.io/daftargraduasi/
+
+Administrator: https://methodistpj.github.io/daftargraduasi/admin.html — allowlisted school Google account required.
+
+Production stack: GitHub Pages frontend → Cloudflare Workers gateway → Google Apps Script → Google Sheets / restricted Google Drive.
 
 This source contains no real student roster, phone list, authentication tokens, gateway secret or receipts. The actual supplied roster remains in its original Drive spreadsheet. The source code's local-preview fixtures are clearly labelled dummy data and never used as a production fallback.
 
@@ -37,4 +41,4 @@ Public build settings: `TWY_API_BASE` (HTTPS Worker `/api` endpoint), `TWY_GOOGL
 
 Private configuration is stored in Cloudflare secrets and Apps Script Script Properties. See `docs/DEPLOYMENT.md`. Never publish a `.clasprc.json`, `.dev.vars`, receipt, canonical state snapshot or the official student roster.
 
-The default production registration setting is closed. A missing API produces a clear unavailable state rather than fake availability or a simulated successful registration.
+A fresh database defaults to closed. The deployed portal was opened after live checks on 28 October 2026. A missing API produces a clear unavailable state rather than fake availability or a simulated successful registration.

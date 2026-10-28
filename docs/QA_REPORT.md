@@ -38,23 +38,26 @@ The local app was opened in the Codex browser and inspected through DOM/accessib
 - Student and guardian full-body guide, mobile carousel, optional-blazer wording.
 - Admin dashboard totals and class filter, using dummy records only.
 
-Screenshots in the parent `qa-screenshots` directory contain dummy data, not the real roster.
+User-facing screenshots show the public portal, dummy test screens or an organizer dashboard without student-name rows.
 
-## Not yet verified; no claim of live completion
+## Verified on the deployed system
 
-- Google Drive folder creation and application database writes: blocked by insufficient Editor rights in supplied folder.
-- Real Apps Script deployment under chosen owner; restricted Drive permissions and atomic Sheets behavior in Google's live runtime.
-- Cloudflare deployment and real Google OAuth client configuration.
-- GitHub source push and GitHub Pages deployment: connected account lacks write permission.
-- Live phone/tablet tests against the final public URL, real receipt storage, quota transitions and administrator sign-in.
-- End-to-end initial-registration receipt branch in a real production browser; the registration/upload domain, HTTP sequence and returning-upload UI were tested locally, but that does not replace live testing.
+Public URL: https://methodistpj.github.io/daftargraduasi/
 
-No real receipts or payment records were used for tests. No real student details were deployed or included in public build files.
+Eight integration scenarios passed against real Cloudflare Workers, Apps Script, Sheets and restricted Drive using a separate dummy workbook and receipt folder. See QA_LIVE_INTEGRATION_RESULT.json. Concurrent identical registrations held seats once; parent recovery worked; a real dummy PNG was privately stored and its retry created one pending payment; guardian updates retained receipt history; duplicate registration was rejected; student-only registration did not use seats; unauthorized admin and foreign-origin access were denied.
+
+The production workbook was restored with 56 active students, zero test registrations and 100 available guardian places. Bank details and the required reference were read back through the real API. The original roster was untouched. A native source snapshot and private backup were created.
+
+GitHub Pages deployment passed. Real Google sign-in to the allowlisted organizer account reached the dashboard. The organizer Backup action succeeded and was audited against the real account; bank/quota settings were verified and registration was opened through the organizer interface.
+
+The live parent UI was inspected through student search and a four-guardian RM220 payment summary, then closed without submitting test records. The actual site was rendered in 390px and 768px iframe viewports; document widths matched the viewport widths with no horizontal overflow. Dress-code guide layout and illustration loading were inspected.
+
+Real bank transactions were not performed. Payment verification and quota-transition rules were exercised with dummy data in the automated/local tests; the live integration used dummy receipt submissions. No real family receipt was used as test data.
 
 ## Policies intentionally taken from latest master
 
 Registrations reserve guardian seats immediately; verification moves seats to confirmed; no automatic expiry; manual releases require an organizer reason. The initial configurable form limit is four guardians. These are the latest master instructions. The older poster's no per-student guardian cap wording and payment-priority wording should be read alongside these configured portal rules before public communication; the approved poster has not been silently changed.
 
-## Launch gate
+## Launch status
 
-Keep production registration closed until access issues are resolved, the actual bank details/reference are read back, private storage is verified, dummy integration tests pass on Google/Cloudflare, and the final live application is inspected. A successful local preview is not a successful production deployment.
+The storage, bank/reference, live integration, organizer sign-in and frontend checks passed. Production registration was opened on 28 October 2026. No test registration was submitted against the real student roster.

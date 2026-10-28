@@ -1,10 +1,14 @@
 # Deployment and access handoff
 
+Live as of 28 October 2026: https://methodistpj.github.io/daftargraduasi/. Registration is open. The following steps document setup/recovery; they are not outstanding user tasks.
+
+Google Auth: Internal audience in the owner-accessible project projek Google pemilik yang telah dikonfigurasi, with the portal-specific web client and exact https://methodistpj.github.io origin. The Worker independently allowlists the selected organizer account.
+
 The agent continues these routine setup steps once the owner provides the missing access. The owner is not expected to write code, create database columns or manually register students.
 
 ## Required access
 
-- Google owner: g-49369646@moe-dl.edu.my with Editor rights on the supplied GRADUASI 2026 folder.
+- Google owner: akaun Google urus setia yang dibenarkan with Editor rights on the supplied GRADUASI 2026 folder.
 - GitHub: write access to methodistPJ/daftargraduasi and ability to enable Pages/Actions. Browser/CLI identity methodistPJ now has confirmed write/admin access. The older connector identity may still differ.
 - Cloudflare: an authorized Workers deployment session/account. Free-tier target; no paid purchase is authorized or required by this source.
 - Apps Script and Google sign-in client under the selected Google owner. The existing machine's unrelated Apps Script credential must not be used to deploy under a different owner.
@@ -48,7 +52,7 @@ Do not deploy an untested app with the real roster. Before opening registration,
 
 - Bank: CIMB BANK
 - Holder: PIBG SK METHODIST PJ
-- Account: 8003392687
+- Account: [rujuk nombor akaun rasmi pada portal]
 - Required transfer reference: **123 GRADUASI**
 - QR: none
 

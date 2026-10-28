@@ -1,13 +1,17 @@
 # Panduan ringkas urus setia
 
-Dokumen ini menerangkan aplikasi yang telah dibina. Gunakan hanya selepas deployment sebenar disahkan; pratonton setempat menggunakan data dummy.
+Laman telah diterbitkan: https://methodistpj.github.io/daftargraduasi/
+
+Ruang urus setia: https://methodistpj.github.io/daftargraduasi/admin.html
+
+Log masuk dengan akaun Google urus setia yang dibenarkan. Pendaftaran dibuka pada 28 Oktober 2026 selepas semakan sistem sebenar.
 
 ## Pendaftaran ibu bapa
 
 1. Pilih nama murid dan kelas daripada carian.
 2. Nyatakan waris yang hadir dan nombor telefon utama. Murid sahaja tetap memerlukan nombor telefon penjaga.
 3. Semak jumlah: RM100 murid + RM30 setiap waris.
-4. Bayar kepada CIMB BANK, PIBG SK METHODIST PJ, 8003392687. Tulis rujukan transaksi **123 GRADUASI**.
+4. Bayar kepada CIMB BANK, PIBG SK METHODIST PJ, [rujuk nombor akaun rasmi pada portal]. Tulis rujukan transaksi **123 GRADUASI**.
 5. Muat naik resit atau pilih muat naik kemudian. Simpan nombor TWY26 dan kod akses peribadi.
 6. Baca panduan pakaian sebelum kembali ke laman utama.
 
