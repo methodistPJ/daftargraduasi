@@ -1,1 +1,1 @@
-window.TWY_CONFIG = {"apiBase":"","googleClientId":"","preview":false};
+window.TWY_CONFIG = {"apiBase":"https://the-wonder-years-2026-api.sekolah-1459.workers.dev/api","googleClientId":"234213495017-uifkg6hprcbha5p157v0dvjrm6f2q3e5.apps.googleusercontent.com","preview":false};
