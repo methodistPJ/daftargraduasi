@@ -1,3 +1,7 @@
+# Name lookup update — 28 October 2026
+
+Latest checks: 73 automated tests, 15 loopback HTTP scenarios, and browser verification of an existing registered pupil, an unregistered pupil, carrying the selected name into registration, and successful registration without a reference/code. Real API results are in QA_NAME_LOOKUP_LIVE.json. No dummy registrations are submitted to production. Previous deployment-stage integration results below are historical.
+
 # QA report — 28 October 2026
 
 ## Verified locally
@@ -15,7 +19,7 @@ Covered behavior:
 - Receipt upload remains pending, does not reserve twice, and is idempotent.
 - Byte-signature MIME validation, size limits, PNG dimension limits, active-PDF rejection and duplicate-receipt hash checks.
 - Verification, partial payments, additional RM30, payment history, overpayment preservation and no automatic refund.
-- Parent access by reference + normalized phone + random recovery code; session scoping; administrator-controlled recovery invalidates old sessions.
+- Parent access by selected student name/class; registered and unregistered paths; existing records and quota preserved; parent session scoping.
 - Allowlisted admin identity and actual RSA Google-token signature validation; invalid algorithm/audience and fake tokens rejected.
 - HMAC verification and nonce replay protection in actual Apps Script handler; lock released on failures; server-side search rate limiting.
 - Drive permission pagination, original-roster/database separation and restricted workbook parent checks.
@@ -32,7 +36,7 @@ The local app was opened in the Codex browser and inspected through DOM/accessib
 - Desktop landing composition and exact approved logo.
 - Phone viewport 390 × 844 and tablet viewport 768 × 1024, using a same-origin viewport harness. Harness is excluded from production build.
 - Student search, class selection, student-only fee and deferred receipt registration.
-- Success reference and recovery code, followed by mandatory dress-code guide.
+- Success confirmation without reference or access code, followed by the dress-code guide.
 - Returning-parent login, adding four guardians, RM220 summary, same-reference update.
 - A dummy PNG receipt uploaded through the UI to the existing registration; successful receipt state observed.
 - Student and guardian full-body guide, mobile carousel, optional-blazer wording.
@@ -44,7 +48,7 @@ User-facing screenshots show the public portal, dummy test screens or an organiz
 
 Public URL: https://methodistpj.github.io/daftargraduasi/
 
-Eight integration scenarios passed against real Cloudflare Workers, Apps Script, Sheets and restricted Drive using a separate dummy workbook and receipt folder. See QA_LIVE_INTEGRATION_RESULT.json. Concurrent identical registrations held seats once; parent recovery worked; a real dummy PNG was privately stored and its retry created one pending payment; guardian updates retained receipt history; duplicate registration was rejected; student-only registration did not use seats; unauthorized admin and foreign-origin access were denied.
+Eight integration scenarios passed against real Cloudflare Workers, Apps Script, Sheets and restricted Drive using a separate dummy workbook and receipt folder. See QA_LIVE_INTEGRATION_RESULT.json. Concurrent identical registrations held seats once; the former parent recovery flow worked in that historical integration run; a real dummy PNG was privately stored and its retry created one pending payment; guardian updates retained receipt history; duplicate registration was rejected; student-only registration did not use seats; unauthorized admin and foreign-origin access were denied.
 
 The production workbook was restored with 56 active students, zero test registrations and 100 available guardian places. Bank details and the required reference were read back through the real API. The original roster was untouched. A native source snapshot and private backup were created.
 

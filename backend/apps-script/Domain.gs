@@ -96,8 +96,7 @@ globalThis.TWYDomain = (() => {
     enforceSeats(s, guardians.length);
     const id = ctx.id(), reference = `TWY26-${String(s.nextReference++).padStart(4, '0')}`;
     const r = { id, reference, studentId: student.id, contactPhone: contact, status: 'ACTIVE', seatsHeld: true,
-      accessHash: ctx.accessHash, createdAt: ctx.now(), updatedAt: ctx.now() };
-    if (!r.accessHash) fail('INTERNAL_ERROR', 'Pendaftaran tidak dapat disahkan.');
+      accessHash: ctx.accessHash || '', createdAt: ctx.now(), updatedAt: ctx.now() };
     s.registrations.push(r);
     for (const g of guardians) s.guardians.push({ ...g, id: ctx.id(), registrationId: id, active: true });
     s.idempotency[scope] = { registrationId: id, canonical };

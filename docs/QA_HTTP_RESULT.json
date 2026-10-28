@@ -1,6 +1,6 @@
 {
   "environment": "Loopback-only dummy-data adapter; not production Google/Cloudflare",
-  "at": "2026-10-28T02:08:35.789Z",
+  "at": "2026-10-28T09:50:29.463Z",
   "passed": 15,
   "failed": 0,
   "results": [
@@ -25,7 +25,7 @@
       "status": "PASS"
     },
     {
-      "name": "Returning parent authentication rejects incorrect access code",
+      "name": "Selected registered name opens existing record without credentials",
       "status": "PASS"
     },
     {
@@ -61,7 +61,7 @@
       "status": "PASS"
     },
     {
-      "name": "Resetting access invalidates old session and permits the new recovery code",
+      "name": "Name lookup works after registration close without changing held places",
       "status": "PASS"
     }
   ]

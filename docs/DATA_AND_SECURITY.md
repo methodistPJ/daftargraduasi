@@ -20,7 +20,7 @@ The public static build contains logos, event content, public API/client configu
 
 Name search accepts at least three characters, returns six matches at most and is rate-limited at gateway and backend. This intentionally provides minimal name/class discovery required by the brief; rate limiting mitigates rather than mathematically eliminates enumeration. Search is not a bulk-roster endpoint.
 
-Parent access requires reference, registered phone and a random recovery code. The backend stores only a secret-keyed hash of that code and session tokens. Short-lived parent sessions authorize a specific registration only. Losing a code requires organizer identity verification and audited reset; old sessions are invalidated.
+Parent access uses the selected official student ID from name/class search, as requested by the school. No registration reference, phone challenge or recovery code is required. Anyone who selects a student can open and edit that registration; this is a simplified lookup flow, not identity verification. A short-lived hashed session scopes subsequent updates and receipt submissions to that registration. Receipt files remain organizer-only. Internal registration references remain for bookkeeping and existing records are preserved.
 
 Admin Google tokens are checked at the Worker and the allowlisted identity is rechecked in Apps Script. The gateway signs server-controlled identity, action, session token and a hashed client key. Client-supplied roles are ignored. The shared HMAC secret never enters frontend files.
 

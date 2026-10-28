@@ -48,31 +48,28 @@ function doPost(e) {
   try {
     if(!lock.tryLock(25000)) throw error_('BUSY','Sistem sedang mengemas kini tempat. Sila cuba semula.',503);
     var request=verifyEnvelope_(e), action=request.action, input=request.data||{};
-    limit_(request.clientKey+':'+action, action==='public.search'?20:action==='auth.login'?5:40, action==='auth.login'?600:60);
+    limit_(request.clientKey+':'+action, action==='public.search'?20:action==='auth.login'?20:40, 60);
     if(action==='public.search') limit_('search-hour:'+request.clientKey,100,3600);
     var loaded=loadState_(), state=JSON.parse(JSON.stringify(loaded)), ctx=context_(), result, changed=false, createdFile=null;
     if(action.indexOf('admin.')===0) {ctx=context_(requireAdmin_(request));ctx.role='admin';}
     if(action==='public.state') {var publicConfig=TWYDomain.publicSettings(state);publicConfig.registrationOpen=TWYDomain.canRegister(state);result={settings:publicConfig,quota:TWYDomain.quota(state)};}
     else if(action==='public.search') {
-      if(!TWYDomain.canRegister(state)) throw error_('REGISTRATION_CLOSED','Pendaftaran belum dibuka.',503);
       result={students:TWYDomain.search(state,input.query)};
     }
     else if(action==='public.register') {
-      var recovery=mac_('recovery:'+input.studentId+':'+input.idempotencyKey).slice(0,32).toUpperCase();
-      ctx.accessHash=mac_('access:'+recovery);
       result=TWYDomain.register(state,input,ctx);
-      result.accessCode=recovery.match(/.{1,8}/g).join('-');
       result.sessionToken=createSession_(state,result.registration.id);
       changed=true;
     }
     else if(action==='auth.login') {
-      var ref=String(input.reference||'').trim().toUpperCase(), r=state.registrations.find(function(r){return r.reference===ref;});
-      var normalizedPhone;try{normalizedPhone=TWYDomain.phone(input.contactPhone);}catch(_){normalizedPhone='invalid';}
-      var code=String(input.accessCode||'').replace(/[\s-]/g,'').toUpperCase();
-      var correctCode=equal_(mac_('access:'+code),r?r.accessHash:'0'.repeat(64));
-      if(!r||!equal_(normalizedPhone,r.contactPhone)||!correctCode) throw error_('UNAUTHORIZED','Rujukan, nombor telefon atau kod akses tidak sepadan.',401);
-      result={registration:TWYDomain.view(state,r),sessionToken:createSession_(state,r.id)};
-      TWYDomain.audit(state,context_('parent:'+r.id),'PARENT_LOGIN',r.id);changed=true;
+      var student=state.students.find(function(s){return s.active&&s.id===input.studentId;});
+      if(!student)throw error_('NOT_FOUND','Sila pilih nama murid daripada hasil carian.',404);
+      var r=state.registrations.find(function(r){return r.studentId===student.id;});
+      if(!r)result={registered:false};
+      else {
+        result={registered:true,registration:TWYDomain.view(state,r),sessionToken:createSession_(state,r.id)};
+        TWYDomain.audit(state,context_('parent:'+r.id),'PARENT_OPEN_BY_STUDENT',r.id);changed=true;
+      }
     }
     else if(action.indexOf('parent.')===0) {
       var parentId=authorizeParent_(state,request.sessionToken), parentCtx=context_('parent:'+parentId);
@@ -102,13 +99,6 @@ function doPost(e) {
     else if(action==='admin.settings') {
       if(input.registrationOpen) { assertPrivateFolder_(required_('RECEIPT_FOLDER_ID'));assertAppDatabase_(); }
       result={settings:TWYDomain.setSettings(state,input,ctx)};changed=true;
-    }
-    else if(action==='admin.resetAccess') {
-      if(input.identityVerified!==true)throw error_('IDENTITY_REQUIRED','Sahkan identiti penjaga sebelum menetapkan semula akses.');
-      var resetReason=TWYDomain.text(input.reason,'Sebab penetapan semula',5,300),target=TWYDomain.registration(state,input.registrationId),newCode=random_().slice(0,32).toUpperCase();
-      target.accessHash=mac_('access:'+newCode);state.sessions=state.sessions.filter(function(s){return s.registrationId!==target.id;});
-      TWYDomain.audit(state,ctx,'PARENT_ACCESS_RESET',target.id,resetReason);
-      result={reference:target.reference,accessCode:newCode.match(/.{1,8}/g).join('-')};changed=true;
     }
     else if(action==='admin.syncRoster') {result=syncRoster_(state);TWYDomain.audit(state,ctx,'ROSTER_SYNCED','STUDENTS',String(result.students)+' active students');changed=true;}
     else if(action==='admin.receipt') {

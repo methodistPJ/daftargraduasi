@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-28T09:56:52.567Z",
+  "passed": 5,
+  "productionRegistrationsCreated": 0,
+  "quotaUnchanged": true,
+  "selectedStudentResult": "not yet registered; no record created",
+  "checks": [
+    "Official name search",
+    "Selected student lookup",
+    "Invalid selection rejected",
+    "Parent session required for update/read",
+    "Quota unchanged"
+  ]
+}

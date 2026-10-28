@@ -16,8 +16,8 @@ async function action(name,input,token){const s=structuredClone(state),ctx=conte
   if(name.startsWith('admin.')&&token!==adminToken)D.fail('UNAUTHORIZED','Akses urus setia diperlukan.');
   if(name==='public.state')result={settings:D.publicSettings(s),quota:D.quota(s)};
   else if(name==='public.search')result={students:D.search(s,input.query)};
-  else if(name==='public.register'){const code=hash('recovery:'+input.studentId+input.idempotencyKey).slice(0,32).toUpperCase();ctx.accessHash=hash(code);result=D.register(s,input,ctx);result.accessCode=code.match(/.{1,8}/g).join('-');result.sessionToken=newSession(s,result.registration.id);changed=true;}
-  else if(name==='auth.login'){const r=s.registrations.find(x=>x.reference===String(input.reference).trim().toUpperCase());let phone;try{phone=D.phone(input.contactPhone);}catch{}if(!r||r.contactPhone!==phone||r.accessHash!==hash(String(input.accessCode||'').replace(/[\s-]/g,'').toUpperCase()))D.fail('UNAUTHORIZED','Rujukan, nombor telefon atau kod akses tidak sepadan.');result={registration:D.view(s,r),sessionToken:newSession(s,r.id)};changed=true;}
+  else if(name==='public.register'){result=D.register(s,input,ctx);result.sessionToken=newSession(s,result.registration.id);changed=true;}
+  else if(name==='auth.login'){const student=s.students.find(x=>x.active&&x.id===input.studentId);if(!student)D.fail('NOT_FOUND','Sila pilih nama murid daripada hasil carian.');const r=s.registrations.find(x=>x.studentId===student.id);if(!r)result={registered:false};else{result={registered:true,registration:D.view(s,r),sessionToken:newSession(s,r.id)};D.audit(s,context('parent:'+r.id),'PARENT_OPEN_BY_STUDENT',r.id);changed=true;}}
   else if(name.startsWith('parent.')){const id=parent(s,token);if(name==='parent.get')result={registration:D.view(s,D.registration(s,id))};else if(name==='parent.update'){result={registration:D.update(s,id,input,ctx)};changed=true;}else if(name==='parent.receipt'){const f=validatePreviewFile(input),fileId='preview-private-'+f.sha256;result=D.submitReceipt(s,id,{...input,...f,sizeBytes:f.bytes.length,driveFileId:fileId},ctx);files.set(fileId,{mimeType:f.mimeType,base64:input.base64,fileName:'resit-ujian'+(f.mimeType==='application/pdf'?'.pdf':f.mimeType==='image/png'?'.png':'.jpg')});changed=true;}else D.fail('NOT_FOUND','Tindakan tidak dijumpai.');}
   else if(name==='admin.dashboard')result=D.dashboard(s);
   else if(name==='admin.reviewPayment'){result={registration:D.reviewPayment(s,input,ctx)};changed=true;}
@@ -25,7 +25,6 @@ async function action(name,input,token){const s=structuredClone(state),ctx=conte
   else if(name==='admin.updateRegistration'){ctx.role='admin';result={registration:D.update(s,input.registrationId,input,ctx)};changed=true;}
   else if(name==='admin.settings'){result={settings:D.setSettings(s,input,ctx)};changed=true;}
   else if(name==='admin.receipt'){const receipt=s.receipts.find(r=>r.id===input.receiptId);if(!receipt)D.fail('NOT_FOUND','Resit tidak dijumpai.');result=files.get(receipt.driveFileId);}
-  else if(name==='admin.resetAccess'){if(input.identityVerified!==true)D.fail('IDENTITY_REQUIRED','Sahkan identiti penjaga.');const r=D.registration(s,input.registrationId),code=crypto.randomBytes(16).toString('hex').toUpperCase();r.accessHash=hash(code);s.sessions=s.sessions.filter(x=>x.registrationId!==r.id);result={reference:r.reference,accessCode:code.match(/.{1,8}/g).join('-')};D.audit(s,ctx,'PARENT_ACCESS_RESET',r.id,'Identity checked by admin');changed=true;}
   else if(name==='admin.export')result={rows:D.dashboard(s).registrations};
   else if(name==='admin.syncRoster')result={students:students.length};
   else if(name==='admin.backup')result={fileId:'dummy-backup-memory-only',createdAt:ctx.now()};
