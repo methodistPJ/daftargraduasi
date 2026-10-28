@@ -1,0 +1,47 @@
+{
+  "environment": "Cloudflare Workers to Google Apps Script to separate private dummy Sheets/Drive",
+  "passed": 8,
+  "steps": [
+    {
+      "name": "Dummy test database is active; real roster is not served",
+      "status": "PASS"
+    },
+    {
+      "name": "Concurrent registration retries reserve two seats exactly once",
+      "status": "PASS"
+    },
+    {
+      "name": "Parent can return using reference, phone and recovery code",
+      "status": "PASS"
+    },
+    {
+      "name": "Private Drive receipt upload and retry create one pending payment",
+      "status": "PASS"
+    },
+    {
+      "name": "Guardian update persists and repeated update does not double quota",
+      "status": "PASS"
+    },
+    {
+      "name": "Duplicate registration for the same student is rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "Student-only registration does not use guardian quota",
+      "status": "PASS"
+    },
+    {
+      "name": "Unauthorized admin access and foreign website origin are rejected",
+      "status": "PASS"
+    }
+  ],
+  "at": "2026-10-28T05:35:36.730Z",
+  "productionAfterTest": {
+    "students": 56,
+    "registrations": 0,
+    "registrationOpen": false,
+    "capacity": 100,
+    "available": 100,
+    "bankReference": "123 GRADUASI"
+  }
+}

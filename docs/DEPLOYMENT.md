@@ -5,7 +5,7 @@ The agent continues these routine setup steps once the owner provides the missin
 ## Required access
 
 - Google owner: g-49369646@moe-dl.edu.my with Editor rights on the supplied GRADUASI 2026 folder.
-- GitHub: write access to methodistPJ/daftargraduasi and ability to enable Pages/Actions. Current connected identity ustpPU is read-only.
+- GitHub: write access to methodistPJ/daftargraduasi and ability to enable Pages/Actions. Browser/CLI identity methodistPJ now has confirmed write/admin access. The older connector identity may still differ.
 - Cloudflare: an authorized Workers deployment session/account. Free-tier target; no paid purchase is authorized or required by this source.
 - Apps Script and Google sign-in client under the selected Google owner. The existing machine's unrelated Apps Script credential must not be used to deploy under a different owner.
 
@@ -13,9 +13,9 @@ The agent continues these routine setup steps once the owner provides the missin
 
 1. Inspect the supplied parent folder, reuse any previously created subfolders, and create only missing DATABASE, PAYMENT_RECEIPTS, BRAND_ASSETS, REPORTS_EXPORTS, DOCUMENTATION and BACKUPS.
 2. Enable limited access on DATABASE, PAYMENT_RECEIPTS, REPORTS_EXPORTS and BACKUPS. Verify every permission page. Only the owner and explicit allowlisted organizer users can access data. Inherited metadata-only visibility does not grant file-content access.
-3. Copy the entire supplied native roster spreadsheet into the restricted DATABASE folder as a separate application workbook. Verify the new ID differs from the official source. Retain the copied sheet as ROSTER_SNAPSHOT; never write application tables into the original source file.
+3. Keep the application workbook separate from the official source. Preserve a native copy of the official source as ROSTER_SNAPSHOT in the restricted DATABASE folder; never write application tables into the original source file.
 4. The source's actual layout is headerless: student name in A, class in B, tab Sheet1. Sync reads the original source rather than treating its copied snapshot as authoritative.
-5. Create the Apps Script project under the selected owner and push appsscript.json, Code.gs and generated Domain.gs from backend/apps-script after npm run build.
+5. Create the Apps Script project under the selected owner and push appsscript.json, Code.gs and generated Domain.gs from backend/apps-script after npm run build. Enable the Drive v3 and Sheets v4 advanced services declared in the manifest so REST calls can use the default Apps Script Cloud project.
 6. Configure Script Properties privately:
 
 | Property | Meaning |
