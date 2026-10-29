@@ -6,7 +6,7 @@ globalThis.TWYDomain = (() => {
     title: 'The Wonder Years 2026', tagline: 'Six Years of Memories, A Lifetime of Wonder.',
     eventName: 'Majlis Graduasi Tahun 6 SK Methodist Petaling Jaya 2026',
     eventDate: '2026-12-02', eventTime: '14:30', timeZone: 'Asia/Kuala_Lumpur',
-    venue: "D’Buana Hall, Petaling Jaya", paymentDeadline: '2026-11-25',
+    venue: "D’Buana Hall, Petaling Jaya", paymentDeadline: '2026-11-20',
     studentFeeCents: 10000, guardianFeeCents: 3000, capacity: 100, maxGuardians: 4,
     registrationOpen: false, reservationPolicy: 'MANUAL_RELEASE_ONLY',
     bankName: 'CIMB BANK', accountHolder: 'PIBG SK METHODIST PJ', accountNumber: '8003392687', bankReference: '123 GRADUASI', bankQrAsset: '',
@@ -205,8 +205,9 @@ globalThis.TWYDomain = (() => {
     return view(s, r);
   }
   function setSettings(s, values, ctx) {
-    const allowed = ['capacity', 'maxGuardians', 'registrationOpen', 'bankName', 'accountHolder', 'accountNumber', 'bankReference', 'bankQrAsset'];
+    const allowed = ['paymentDeadline', 'capacity', 'maxGuardians', 'registrationOpen', 'bankName', 'accountHolder', 'accountNumber', 'bankReference', 'bankQrAsset'];
     if (Object.keys(values).some(k => !allowed.includes(k))) fail('INVALID_SETTINGS', 'Tetapan tidak dibenarkan.');
+    if ('paymentDeadline' in values && (typeof values.paymentDeadline!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(values.paymentDeadline)||new Date(values.paymentDeadline+'T00:00:00Z').toISOString().slice(0,10)!==values.paymentDeadline||values.paymentDeadline>s.settings.eventDate)) fail('INVALID_DEADLINE','Tarikh akhir mesti tarikh yang sah dan tidak selepas tarikh majlis.');
     if ('capacity' in values) {
       const used = quota(s).reserved + quota(s).confirmed;
       if (!Number.isInteger(values.capacity) || values.capacity < used || values.capacity > 1000) fail('INVALID_CAPACITY', 'Kapasiti lebih kecil daripada tempat yang telah diperuntukkan.');

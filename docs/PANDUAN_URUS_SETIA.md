@@ -46,3 +46,5 @@ Di ruang urus setia, pilih Imbas QR Kehadiran. Gunakan kamera telefon selepas me
 Daftar masuk sebenar hanya dibuka pada 2 Disember 2026. Sebelum itu QR boleh disediakan/dipaparkan selepas bayaran penuh, tetapi tidak boleh ditandakan hadir. Pembayaran separa atau resit menunggu semakan tidak mengaktifkan QR. Jika waris ditambah dan timbul baki baharu, QR yang sama digantung sehingga baki disahkan. Selepas kumpulan ditandakan hadir, maklumat waris tidak boleh diubah melalui borang biasa. Pembetulan telefon masih dibenarkan.
 
 Dashboard menunjukkan jumlah kumpulan dan orang telah hadir. Eksport CSV turut mengandungi status, waktu hadir dan jumlah orang masuk. Rekod kehadiran disimpan dalam state database dan disertakan dalam backup.
+
+Tarikh akhir pembayaran dan pendaftaran semasa: **20 November 2026**. Penutupan automatik pendaftaran baharu bermula 21 November 2026, 12.00 tengah malam waktu Malaysia. Paparan tarikh menggunakan tetapan yang sama dalam database.
