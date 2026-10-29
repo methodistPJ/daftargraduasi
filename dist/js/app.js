@@ -1,5 +1,5 @@
-import {formatPhone,bindPhoneInputs} from './phone.js';
-import {api,config,money,escapeHTML as E,key,receiptPayload} from './api.js';
+import {formatPhone,bindPhoneInputs} from './phone.js?v=9fb7512687e4';
+import {api,config,money,escapeHTML as E,key,receiptPayload} from './api.js?v=9fb7512687e4';
 const $=s=>document.querySelector(s),dialog=$('#flow-dialog'),content=$('#flow-content');
 let official=null,sessionToken='',currentRegistration=null,draft=null,success=null,guideReturn=false,guideGroup='students',previousFocus=null,busy=false;
 const labels={PENDING:'Menunggu semakan',VERIFIED:'Disahkan',REJECTED:'Perlu pembetulan'};

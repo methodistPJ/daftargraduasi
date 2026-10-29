@@ -1,5 +1,5 @@
-import {bindPhoneInputs} from './phone.js';
-import {api,config,money,escapeHTML as E,key,receiptPayload,downloadText} from './api.js';
+import {bindPhoneInputs} from './phone.js?v=9fb7512687e4';
+import {api,config,money,escapeHTML as E,key,receiptPayload,downloadText} from './api.js?v=9fb7512687e4';
 const $=s=>document.querySelector(s);let token='',data=null,currentTab='registrations',filterText='',filterClass='',filterPayment='',selected=null;const dialog=$('#admin-dialog'),body=$('#admin-dialog-content');
 const notice=msg=>{const el=$('#admin-toast');el.textContent=msg;el.hidden=false;setTimeout(()=>el.hidden=true,4000);};
 function error(msg){let el=document.querySelector('.admin-message');if(!el){el=document.createElement('p');el.className='admin-message';el.setAttribute('role','alert');(dialog.open?body:$('#admin-main')).prepend(el);}el.textContent=msg;}
