@@ -74,19 +74,29 @@ globalThis.TWYDomain = (() => {
       payments: s.payments.filter(p => p.registrationId === r.id).map(({ id, amountCents, status, createdAt, reviewedAt, reviewNote, receiptId }) => ({ id, amountCents, status, createdAt, reviewedAt, reviewNote, receiptId })) };
   }
   function passEligible(s,r) { return r.status==='ACTIVE' && paid(s,r.id)>=total(s,r) && (r.seatsHeld || activeGuardians(s,r).length===0); }
-  function attendancePass(s,id) {
-    const r=registration(s,id),student=s.students.find(p=>p.id===r.studentId);
-    return {available:passEligible(s,r),student:{id:student.id,name:student.name,className:student.className},guardianCount:activeGuardians(s,r).length,partySize:1+activeGuardians(s,r).length,eventDate:s.settings.eventDate,venue:s.settings.venue,attendance:r.attendance||null,outstandingCents:Math.max(0,total(s,r)-paid(s,r.id))};
+  function attendancePeople(s,r) {
+    const student=s.students.find(p=>p.id===r.studentId),people=[{id:'student:'+student.id,name:student.name,role:'Murid'},...activeGuardians(s,r).map(g=>({id:'guardian:'+g.id,name:g.name,role:'Waris'}))];
+    // Honor previously recorded whole-family admissions when reading older records.
+    const entries=r.attendance?(r.attendance.entries||people.map(p=>({personId:p.id,checkedInAt:r.attendance.checkedInAt,checkedInBy:r.attendance.checkedInBy}))):[];
+    return people.map(p=>({...p,checkedInAt:entries.find(e=>e.personId===p.id)?.checkedInAt||null}));
   }
-  function checkIn(s,id,ctx) {
-    const r=registration(s,id);
-    if(r.attendance)return {pass:attendancePass(s,id),alreadyUsed:true};
+  function attendancePass(s,id) {
+    const r=registration(s,id),student=s.students.find(p=>p.id===r.studentId),people=attendancePeople(s,r),checkedInCount=people.filter(p=>p.checkedInAt).length;
+    return {available:passEligible(s,r),student:{id:student.id,name:student.name,className:student.className},guardianCount:activeGuardians(s,r).length,partySize:people.length,people,checkedInCount,remainingCount:people.length-checkedInCount,eventDate:s.settings.eventDate,venue:s.settings.venue,attendance:r.attendance||null,outstandingCents:Math.max(0,total(s,r)-paid(s,r.id))};
+  }
+  function checkIn(s,id,ctx,personIds) {
+    const r=registration(s,id),people=attendancePeople(s,r);
+    if(!Array.isArray(personIds)||!personIds.length||personIds.length>people.length||new Set(personIds).size!==personIds.length||personIds.some(id=>!people.some(p=>p.id===id)))fail('SELECT_PEOPLE','Pilih ahli keluarga yang hadir daripada senarai QR ini.');
+    const fresh=people.filter(p=>personIds.includes(p.id)&&!p.checkedInAt);
+    if(!fresh.length)return {pass:attendancePass(s,id),alreadyUsed:true,addedCount:0};
     if(!passEligible(s,r))fail('PASS_NOT_READY','Bayaran penuh belum disahkan. QR ini belum boleh digunakan.');
     const day=new Date(Date.parse(ctx.now())+8*3600000).toISOString().slice(0,10);
     if(day!==s.settings.eventDate)fail('EVENT_NOT_TODAY','Daftar masuk hanya dibuka pada tarikh majlis.');
-    r.attendance={checkedInAt:ctx.now(),checkedInBy:ctx.actor,guardianCount:activeGuardians(s,r).length,partySize:1+activeGuardians(s,r).length};
-    audit(s,ctx,'ATTENDANCE_CHECKED_IN',id,`One family pass; ${r.attendance.partySize} people`);
-    return {pass:attendancePass(s,id),alreadyUsed:false};
+    const previous=r.attendance?.entries||[];
+    const entries=[...previous,...fresh.map(p=>({personId:p.id,checkedInAt:ctx.now(),checkedInBy:ctx.actor}))];
+    r.attendance={checkedInAt:r.attendance?.checkedInAt||ctx.now(),checkedInBy:r.attendance?.checkedInBy||ctx.actor,entries,partySize:entries.length,guardianCount:entries.filter(e=>e.personId.startsWith('guardian:')).length};
+    audit(s,ctx,'ATTENDANCE_CHECKED_IN',id,`${fresh.length} selected people; ${entries.length}/${people.length} arrived`);
+    return {pass:attendancePass(s,id),alreadyUsed:false,addedCount:fresh.length};
   }
   function registration(s, id) { const r = s.registrations.find(x => x.id === id); if (!r) fail('NOT_FOUND', 'Rekod tidak dijumpai.'); return r; }
   function canRegister(s, at = new Date().toISOString()) { return s.settings.registrationOpen && new Date(Date.parse(at) + 8 * 3600000).toISOString().slice(0,10) <= s.settings.paymentDeadline; }
@@ -235,5 +245,5 @@ globalThis.TWYDomain = (() => {
     return true;
   }
   return { defaults, initial, fail, text, phone, amount, quota, total, paid, seatsFor, activeGuardians, publicSettings, search,
-    view, passEligible, attendancePass, checkIn, registration, canRegister, register, update, submitReceipt, reviewPayment, release, setSettings, dashboard, assertIntegrity, audit };
+    view, passEligible, attendancePeople, attendancePass, checkIn, registration, canRegister, register, update, submitReceipt, reviewPayment, release, setSettings, dashboard, assertIntegrity, audit };
 })();

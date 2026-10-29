@@ -1,6 +1,6 @@
-import {drawPassQR} from './qr-display.js?v=f93147630ff0';
-import {formatPhone,bindPhoneInputs} from './phone.js?v=f93147630ff0';
-import {api,config,money,escapeHTML as E,key,receiptPayload} from './api.js?v=f93147630ff0';
+import {drawPassQR} from './qr-display.js?v=2979acb6d9e5';
+import {formatPhone,bindPhoneInputs} from './phone.js?v=2979acb6d9e5';
+import {api,config,money,escapeHTML as E,key,receiptPayload} from './api.js?v=2979acb6d9e5';
 const $=s=>document.querySelector(s),dialog=$('#flow-dialog'),content=$('#flow-content');
 let official=null,sessionToken='',currentRegistration=null,draft=null,success=null,guideReturn=false,guideGroup='students',previousFocus=null,busy=false;
 const labels={PENDING:'Menunggu semakan',VERIFIED:'Disahkan',REJECTED:'Perlu pembetulan'};
@@ -101,7 +101,7 @@ function showProfile(){
 async function showPass(){
   const {pass}=await api('parent.pass',{},sessionToken);
   if(!pass.available){await refreshPublic();throw new Error('QR belum tersedia. Bayaran penuh perlu disahkan oleh urus setia.');}
-  showDialog(panel('QR Kehadiran.','Satu QR untuk murid bersama semua waris dalam pendaftaran ini.',`<section class="pass-card"><p class="eyebrow">PAS GRADUASI · 2 DISEMBER 2026</p><h3>${E(pass.student.name)}</h3><p>Kelas ${E(pass.student.className)} · ${pass.guardianCount} waris · ${pass.partySize} orang keseluruhan</p><canvas id="attendance-qr" aria-label="QR Kehadiran rasmi graduasi"></canvas><p class="pass-status ${pass.attendance?'used':''}">${pass.attendance?'SUDAH HADIR':'BAYARAN PENUH DISAHKAN'}</p><p>${E(pass.venue)}</p><p class="quiet-note">Tunjukkan QR ini kepada petugas di pintu masuk. Simpan untuk kegunaan keluarga sendiri.</p></section><div class="payment-options"><a class="button button-navy" id="save-pass" download="TWY2026-QR-Kehadiran.png">SIMPAN QR</a><button class="button button-plain" id="pass-back">KEMBALI KE PENDAFTARAN</button></div>`));
+  showDialog(panel('QR Kehadiran.','Satu QR untuk murid bersama semua waris dalam pendaftaran ini.',`<section class="pass-card"><p class="eyebrow">PAS GRADUASI · 2 DISEMBER 2026</p><h3>${E(pass.student.name)}</h3><p>Kelas ${E(pass.student.className)} · ${pass.guardianCount} waris · ${pass.partySize} orang keseluruhan</p><canvas id="attendance-qr" aria-label="QR Kehadiran rasmi graduasi"></canvas><p class="pass-status ${pass.attendance?'used':''}">${pass.checkedInCount?(pass.remainingCount===0?'SEMUA SUDAH HADIR':pass.checkedInCount+' DARIPADA '+pass.partySize+' SUDAH HADIR'):'BAYARAN PENUH DISAHKAN'}</p><p>${E(pass.venue)}</p><p class="quiet-note">Tunjukkan QR ini kepada petugas di pintu masuk. Simpan untuk kegunaan keluarga sendiri.</p></section><div class="payment-options"><a class="button button-navy" id="save-pass" download="TWY2026-QR-Kehadiran.png">SIMPAN QR</a><button class="button button-plain" id="pass-back">KEMBALI KE PENDAFTARAN</button></div>`));
   const canvas=$('#attendance-qr');drawPassQR(canvas,pass.code);$('#save-pass').href=canvas.toDataURL('image/png');$('#pass-back').onclick=showProfile;
 }
 const guideData={students:[

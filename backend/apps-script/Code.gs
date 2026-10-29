@@ -104,7 +104,7 @@ function doPost(e) {
       var code=String(input.code||'').trim(),target=state.registrations.find(function(r){return equal_(attendanceCode_(r.id),code);});
       if(!/^TWY26-[a-f0-9]{64}$/.test(code)||!target)throw error_('INVALID_PASS','QR tidak sah. Gunakan QR Kehadiran rasmi graduasi.',404);
       if(action==='admin.inspectPass'){result={pass:TWYDomain.attendancePass(state,target.id),canCheckIn:new Date(Date.now()+8*3600000).toISOString().slice(0,10)===state.settings.eventDate};}
-      else {result=TWYDomain.checkIn(state,target.id,ctx);changed=!result.alreadyUsed;}
+      else {result=TWYDomain.checkIn(state,target.id,ctx,input.personIds);changed=!result.alreadyUsed;}
     }
     else if(action==='admin.dashboard') result=TWYDomain.dashboard(state);
     else if(action==='admin.reviewPayment') {result={registration:TWYDomain.reviewPayment(state,input,ctx)};changed=true;}
