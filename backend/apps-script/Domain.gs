@@ -70,8 +70,23 @@ globalThis.TWYDomain = (() => {
     return { id: r.id, reference: r.reference, student: student ? { id: student.id, name: student.name, className: student.className } : null,
       contactPhone: phone(r.contactPhone), guardians: activeGuardians(s, r).map(g => ({ id: g.id, name: g.name, phone: phone(g.phone) })),
       totalCents, verifiedCents, outstandingCents: Math.max(0, totalCents - verifiedCents), overpaymentCents: Math.max(0, verifiedCents - totalCents),
-      seatsHeld: r.seatsHeld, seats: seatsFor(s, r), status: r.status, createdAt: r.createdAt, updatedAt: r.updatedAt,
+      attendance: r.attendance || null, passEligible: passEligible(s,r), seatsHeld: r.seatsHeld, seats: seatsFor(s, r), status: r.status, createdAt: r.createdAt, updatedAt: r.updatedAt,
       payments: s.payments.filter(p => p.registrationId === r.id).map(({ id, amountCents, status, createdAt, reviewedAt, reviewNote, receiptId }) => ({ id, amountCents, status, createdAt, reviewedAt, reviewNote, receiptId })) };
+  }
+  function passEligible(s,r) { return r.status==='ACTIVE' && paid(s,r.id)>=total(s,r) && (r.seatsHeld || activeGuardians(s,r).length===0); }
+  function attendancePass(s,id) {
+    const r=registration(s,id),student=s.students.find(p=>p.id===r.studentId);
+    return {available:passEligible(s,r),student:{id:student.id,name:student.name,className:student.className},guardianCount:activeGuardians(s,r).length,partySize:1+activeGuardians(s,r).length,eventDate:s.settings.eventDate,venue:s.settings.venue,attendance:r.attendance||null,outstandingCents:Math.max(0,total(s,r)-paid(s,r.id))};
+  }
+  function checkIn(s,id,ctx) {
+    const r=registration(s,id);
+    if(r.attendance)return {pass:attendancePass(s,id),alreadyUsed:true};
+    if(!passEligible(s,r))fail('PASS_NOT_READY','Bayaran penuh belum disahkan. QR ini belum boleh digunakan.');
+    const day=new Date(Date.parse(ctx.now())+8*3600000).toISOString().slice(0,10);
+    if(day!==s.settings.eventDate)fail('EVENT_NOT_TODAY','Daftar masuk hanya dibuka pada tarikh majlis.');
+    r.attendance={checkedInAt:ctx.now(),checkedInBy:ctx.actor,guardianCount:activeGuardians(s,r).length,partySize:1+activeGuardians(s,r).length};
+    audit(s,ctx,'ATTENDANCE_CHECKED_IN',id,`One family pass; ${r.attendance.partySize} people`);
+    return {pass:attendancePass(s,id),alreadyUsed:false};
   }
   function registration(s, id) { const r = s.registrations.find(x => x.id === id); if (!r) fail('NOT_FOUND', 'Rekod tidak dijumpai.'); return r; }
   function canRegister(s, at = new Date().toISOString()) { return s.settings.registrationOpen && new Date(Date.parse(at) + 8 * 3600000).toISOString().slice(0,10) <= s.settings.paymentDeadline; }
@@ -115,6 +130,7 @@ globalThis.TWYDomain = (() => {
     const contact = phone(input.contactPhone), next = validateGuardians(s, input.guardians || [], contact), old = activeGuardians(s, r);
     const ids = next.filter(g => g.id).map(g => g.id);
     if (new Set(ids).size !== ids.length || ids.some(g => !old.some(o => o.id === g))) fail('INVALID_GUARDIANS', 'Rekod waris tidak sepadan.');
+    if(r.attendance&&(old.length!==next.length||old.some((g,i)=>g.name!==next[i].name||phone(g.phone)!==next[i].phone)))fail('ALREADY_CHECKED_IN','Kumpulan ini telah hadir. Perubahan waris memerlukan semakan urus setia.');
     const willHold = r.seatsHeld || input.reserveSeats === true;
     if (next.length > old.length || (!r.seatsHeld && willHold)) { if (ctx.role !== 'admin') open(s, ctx); }
     if (!willHold && next.length > old.length) fail('RESERVATION_RELEASED', 'Pilih tempahan semula untuk menambah waris.');
@@ -219,5 +235,5 @@ globalThis.TWYDomain = (() => {
     return true;
   }
   return { defaults, initial, fail, text, phone, amount, quota, total, paid, seatsFor, activeGuardians, publicSettings, search,
-    view, registration, canRegister, register, update, submitReceipt, reviewPayment, release, setSettings, dashboard, assertIntegrity, audit };
+    view, passEligible, attendancePass, checkIn, registration, canRegister, register, update, submitReceipt, reviewPayment, release, setSettings, dashboard, assertIntegrity, audit };
 })();

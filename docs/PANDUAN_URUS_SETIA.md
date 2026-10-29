@@ -36,3 +36,13 @@ Tetapan membolehkan kapasiti, had waris borang, maklumat bank dan status buka/tu
 Gunakan Segerakkan Senarai Murid untuk mengambil perubahan daripada sumber rasmi; sumber asal tidak ditulis semula. Buat Backup sebelum perubahan penting. Eksport CSV mengandungi maklumat keluarga dan hanya untuk urusan graduasi; jangan sebarkan pautan atau failnya secara terbuka.
 
 Nombor telefon dikemaskan secara automatik: `+60 18-904 4630` menjadi `0189044630`. Jika nombor utama terlupa atau telah berubah dan penjaga tidak dapat membuka rekod, hubungi urus setia untuk pembetulan selepas pengesahan melalui saluran sekolah. Jangan daftar semula.
+
+## QR Kehadiran keluarga
+
+Selepas jumlah pakej dibayar penuh dan disahkan urus setia, ibu bapa membuka Semak / Kemaskini, memilih nama anak dan memasukkan telefon utama. Butang Lihat QR Kehadiran menyediakan satu QR untuk murid bersama semua waris dalam pendaftaran itu. QR boleh disimpan sebagai PNG. QR tidak mengandungi nombor telefon atau nama.
+
+Di ruang urus setia, pilih Imbas QR Kehadiran. Gunakan kamera telefon selepas memberi izin, pilih gambar QR atau gunakan pengimbas USB pada medan kod. Semak nama, kelas dan bilangan orang, kemudian tekan Sahkan Hadir. Kehadiran seluruh kumpulan direkodkan sekali. QR yang diimbas semula memaparkan Sudah Hadir dan tidak menambah jumlah lagi. Kamera dan semakan pelayan memerlukan sambungan internet.
+
+Daftar masuk sebenar hanya dibuka pada 2 Disember 2026. Sebelum itu QR boleh disediakan/dipaparkan selepas bayaran penuh, tetapi tidak boleh ditandakan hadir. Pembayaran separa atau resit menunggu semakan tidak mengaktifkan QR. Jika waris ditambah dan timbul baki baharu, QR yang sama digantung sehingga baki disahkan. Selepas kumpulan ditandakan hadir, maklumat waris tidak boleh diubah melalui borang biasa. Pembetulan telefon masih dibenarkan.
+
+Dashboard menunjukkan jumlah kumpulan dan orang telah hadir. Eksport CSV turut mengandungi status, waktu hadir dan jumlah orang masuk. Rekod kehadiran disimpan dalam state database dan disertakan dalam backup.

@@ -1,6 +1,6 @@
 const encoder = new TextEncoder();
-const ACTIONS = new Set(['public.state','public.search','public.lookup','public.register','auth.login','parent.get','parent.update','parent.receipt',
-  'admin.dashboard','admin.reviewPayment','admin.release','admin.updateRegistration','admin.settings','admin.receipt','admin.backup','admin.export','admin.syncRoster']);
+const ACTIONS = new Set(['public.state','public.search','public.lookup','public.register','auth.login','parent.get','parent.pass','parent.update','parent.receipt',
+  'admin.dashboard','admin.inspectPass','admin.checkIn','admin.reviewPayment','admin.release','admin.updateRegistration','admin.settings','admin.receipt','admin.backup','admin.export','admin.syncRoster']);
 const hex = bytes => [...new Uint8Array(bytes)].map(b => b.toString(16).padStart(2,'0')).join('');
 export async function hmac(secret, value) {
   const key=await crypto.subtle.importKey('raw',encoder.encode(secret),{name:'HMAC',hash:'SHA-256'},false,['sign']);

@@ -80,7 +80,8 @@ function doPost(e) {
     }
     else if(action.indexOf('parent.')===0) {
       var parentId=authorizeParent_(state,request.sessionToken), parentCtx=context_('parent:'+parentId);
-      if(action==='parent.get') result={registration:TWYDomain.view(state,TWYDomain.registration(state,parentId))};
+      if(action==='parent.pass'){var pass=TWYDomain.attendancePass(state,parentId);if(pass.available)pass.code=attendanceCode_(parentId);result={pass:pass};}
+      else if(action==='parent.get') result={registration:TWYDomain.view(state,TWYDomain.registration(state,parentId))};
       else if(action==='parent.update') {result={registration:TWYDomain.update(state,parentId,input,parentCtx)};changed=true;}
       else if(action==='parent.receipt') {
         var file=validateReceipt_(input), receiptKey='receipt:'+parentId+':'+input.idempotencyKey;
@@ -98,6 +99,12 @@ function doPost(e) {
           changed=true;
         }
       } else throw error_('NOT_FOUND','Tindakan tidak dijumpai.',404);
+    }
+    else if(action==='admin.inspectPass'||action==='admin.checkIn') {
+      var code=String(input.code||'').trim(),target=state.registrations.find(function(r){return equal_(attendanceCode_(r.id),code);});
+      if(!/^TWY26-[a-f0-9]{64}$/.test(code)||!target)throw error_('INVALID_PASS','QR tidak sah. Gunakan QR Kehadiran rasmi graduasi.',404);
+      if(action==='admin.inspectPass'){result={pass:TWYDomain.attendancePass(state,target.id),canCheckIn:new Date(Date.now()+8*3600000).toISOString().slice(0,10)===state.settings.eventDate};}
+      else {result=TWYDomain.checkIn(state,target.id,ctx);changed=!result.alreadyUsed;}
     }
     else if(action==='admin.dashboard') result=TWYDomain.dashboard(state);
     else if(action==='admin.reviewPayment') {result={registration:TWYDomain.reviewPayment(state,input,ctx)};changed=true;}
@@ -126,6 +133,7 @@ function doPost(e) {
     return output_({ok:false,error:{code:err.code||'INTERNAL_ERROR',message:err.code?err.message:'Sistem tidak dapat melengkapkan permintaan. Sila cuba semula.',status:err.status||(err.code==='QUOTA_FULL'?409:400),details:err.details||null}});
   } finally { if(lock&&lock.hasLock())lock.releaseLock(); }
 }
+function attendanceCode_(id){return 'TWY26-'+mac_('attendance:v1:'+id);}
 function createSession_(state,id) {
   var token=random_(),now=Date.now();
   state.sessions=state.sessions.filter(function(s){return s.expiresAt>now&&s.authVersion===2;});
