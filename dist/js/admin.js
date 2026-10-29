@@ -1,9 +1,10 @@
+import {bindPhoneInputs} from './phone.js';
 import {api,config,money,escapeHTML as E,key,receiptPayload,downloadText} from './api.js';
 const $=s=>document.querySelector(s);let token='',data=null,currentTab='registrations',filterText='',filterClass='',filterPayment='',selected=null;const dialog=$('#admin-dialog'),body=$('#admin-dialog-content');
 const notice=msg=>{const el=$('#admin-toast');el.textContent=msg;el.hidden=false;setTimeout(()=>el.hidden=true,4000);};
 function error(msg){let el=document.querySelector('.admin-message');if(!el){el=document.createElement('p');el.className='admin-message';el.setAttribute('role','alert');(dialog.open?body:$('#admin-main')).prepend(el);}el.textContent=msg;}
 async function perform(task){document.querySelectorAll('.admin-message').forEach(e=>e.remove());try{await task();}catch(e){error(e.message);}}
-function open(html){body.innerHTML=`<div class="flow-panel admin-detail">${html}</div>`;if(!dialog.open)dialog.showModal();dialog.scrollTop=0;setTimeout(()=>{const h=$('#admin-dialog-title');if(h){h.tabIndex=-1;h.focus();}},0);}
+function open(html){body.innerHTML=`<div class="flow-panel admin-detail">${html}</div>`;bindPhoneInputs(body);if(!dialog.open)dialog.showModal();dialog.scrollTop=0;setTimeout(()=>{const h=$('#admin-dialog-title');if(h){h.tabIndex=-1;h.focus();}},0);}
 $('#admin-close').onclick=()=>dialog.close();$('#admin-logout').onclick=()=>{token='';location.reload();};
 if(config.preview){$('#preview-banner').hidden=false;$('#preview-login').hidden=false;$('#preview-login').onclick=()=>perform(async()=>{const response=await fetch('/api/dev/admin-token',{method:'POST'});const r=await response.json();token=r.token;await load();});}
 else if(config.googleClientId){const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';s.async=true;s.onload=()=>{google.accounts.id.initialize({client_id:config.googleClientId,callback:async r=>{token=r.credential;await perform(load);}});google.accounts.id.renderButton($('#google-signin'),{theme:'outline',size:'large',text:'signin_with'});};s.onerror=()=>{$('#login-status').textContent='Log masuk Google tidak dapat dimuatkan. Sila cuba semula.';};document.head.append(s);}

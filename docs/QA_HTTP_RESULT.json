@@ -1,6 +1,6 @@
 {
   "environment": "Loopback-only dummy-data adapter; not production Google/Cloudflare",
-  "at": "2026-10-28T09:50:29.463Z",
+  "at": "2026-10-28T23:55:28.376Z",
   "passed": 15,
   "failed": 0,
   "results": [
@@ -25,7 +25,7 @@
       "status": "PASS"
     },
     {
-      "name": "Selected registered name opens existing record without credentials",
+      "name": "Selected registered name needs matching phone before opening record",
       "status": "PASS"
     },
     {

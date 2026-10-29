@@ -1,5 +1,5 @@
 const encoder = new TextEncoder();
-const ACTIONS = new Set(['public.state','public.search','public.register','auth.login','parent.get','parent.update','parent.receipt',
+const ACTIONS = new Set(['public.state','public.search','public.lookup','public.register','auth.login','parent.get','parent.update','parent.receipt',
   'admin.dashboard','admin.reviewPayment','admin.release','admin.updateRegistration','admin.settings','admin.receipt','admin.backup','admin.export','admin.syncRoster']);
 const hex = bytes => [...new Uint8Array(bytes)].map(b => b.toString(16).padStart(2,'0')).join('');
 export async function hmac(secret, value) {
@@ -51,7 +51,7 @@ function headers(origin) {
 }
 function json(value,status,origin) {return new Response(JSON.stringify(value),{status,headers:headers(origin)});}
 function error(code,message,status,origin){return json({ok:false,error:{code,message,status}},status,origin);}
-export function createGateway(fetcher=fetch) {
+export function createGateway(fetcher=fetch,searchCache=globalThis.caches?.default) {
   return async function handle(request,env) {
     const origin=request.headers.get('Origin')||'';
     const allow=String(env.ALLOWED_ORIGINS||'').split(',').map(x=>x.trim()).filter(Boolean);
@@ -73,6 +73,18 @@ export function createGateway(fetcher=fetch) {
       const ip=request.headers.get('CF-Connecting-IP')||'unknown';
       const clientKey=(await hmac(env.GATEWAY_SECRET,'client:'+ip)).slice(0,32);
       if(env.API_RATE_LIMITER){const r=await env.API_RATE_LIMITER.limit({key:clientKey+':'+action});if(!r.success)return error('RATE_LIMITED','Terlalu banyak cubaan. Sila cuba sebentar lagi.',429,origin);}
+      // Keep the minimal roster inside the service cache; clients get at most six matches.
+      let searchCacheKey=null,searchQuery='';
+      const matches=roster=>roster.filter(s=>searchQuery.split(' ').every(bit=>s.name.toLocaleUpperCase('ms').includes(bit))).slice(0,6).map(({id,name,className})=>({id,name,className}));
+      if(action==='public.search') {
+        searchQuery=typeof data.query==='string'?data.query.normalize('NFKC').trim().replace(/\s+/g,' ').toLocaleUpperCase('ms'):'';
+        if(searchQuery.length<3||searchQuery.length>80||/[\u0000-\u001f\u007f]/.test(searchQuery))return error('INVALID_INPUT','Taip sekurang-kurangnya tiga huruf nama anak.',400,origin);
+        data={query:searchQuery};
+        if(searchCache){
+          searchCacheKey=new Request('https://twy-search-cache.invalid/v3/roster/'+await hmac(env.GATEWAY_SECRET,env.APPS_SCRIPT_URL));
+          try{const cached=await searchCache.match(searchCacheKey);if(cached){const response=json({ok:true,data:{students:matches(await cached.json())}},200,origin);response.headers.set('X-TWY-Search-Cache','HIT');return response;}}catch{searchCacheKey=null;}
+        }
+      }
       let identity={role:'public'},sessionToken='';
       const token=(request.headers.get('Authorization')||'').replace(/^Bearer\s+/i,'');
       if(action.startsWith('admin.'))identity=await verifyAdminToken(token,env,fetcher);
@@ -81,14 +93,21 @@ export function createGateway(fetcher=fetch) {
         sessionToken=token;
       }
       // Never accept actor, role, IP or session identity from the user-supplied body.
-      const body=JSON.stringify({action,data,identity,sessionToken,clientKey});
+      const body=JSON.stringify({action:action==='public.search'?'internal.searchRoster':action,data,identity:action==='public.search'?{role:'gateway'}:identity,sessionToken,clientKey});
       const timestamp=Date.now(),nonce=crypto.randomUUID().replaceAll('-','');
       const signature=await hmac(env.GATEWAY_SECRET,timestamp+'\n'+nonce+'\n'+body);
       const upstream=await fetcher(env.APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({timestamp,nonce,body,signature}),redirect:'follow',signal:AbortSignal.timeout(45000)});
       if(!upstream.ok)return error('UPSTREAM_UNAVAILABLE','Sistem sedang sibuk. Sila cuba semula.',503,origin);
       let response;try{response=await upstream.json();}catch{return error('UPSTREAM_UNAVAILABLE','Sistem sedang disediakan. Sila cuba semula.',503,origin);}
       if(typeof response.ok!=='boolean')return error('UPSTREAM_UNAVAILABLE','Respons sistem tidak sah.',503,origin);
-      return json(response,response.ok?200:Math.min(599,Math.max(400,Number(response.error?.status)||400)),origin);
+      if(action==='public.search'&&response.ok&&Array.isArray(response.data?.students)) {
+        // Never cache family/contact/payment fields, even if upstream adds fields later.
+        const roster=response.data.students.map(({id,name,className})=>({id,name,className}));
+        if(searchCacheKey){try{await searchCache.put(searchCacheKey,new Response(JSON.stringify(roster),{headers:{'Content-Type':'application/json','Cache-Control':'public, max-age=300'}}));}catch{/* Search still works if cache is unavailable. */}}
+        response.data={students:matches(roster)};
+      }
+      if(action==='admin.syncRoster'&&response.ok&&searchCache){try{await searchCache.delete(new Request('https://twy-search-cache.invalid/v3/roster/'+await hmac(env.GATEWAY_SECRET,env.APPS_SCRIPT_URL)));}catch{/* Cache expires after five minutes. */}}
+      const outgoing=json(response,response.ok?200:Math.min(599,Math.max(400,Number(response.error?.status)||400)),origin);if(action==='public.search')outgoing.headers.set('X-TWY-Search-Cache','MISS');return outgoing;
     }catch(e){
       if(e.message==='BODY_TOO_LARGE')return error('TOO_LARGE','Fail terlalu besar. Had resit ialah 5 MB.',413,origin);
       if(['UNAUTHORIZED','FORBIDDEN'].includes(e.message))return error(e.message,'Akses urus setia tidak dapat disahkan.',e.message==='FORBIDDEN'?403:401,origin);

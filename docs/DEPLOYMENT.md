@@ -56,7 +56,7 @@ Do not deploy an untested app with the real roster. Before opening registration,
 - Required transfer reference: **123 GRADUASI**
 - QR: none
 
-Verify these in the actual SETTINGS tab, parent summary and returning-parent page. Registration numbers TWY26-xxxx remain internal bookkeeping references. Parents return by searching and selecting the child’s name/class; no reference or access code is required.
+Verify these in the actual SETTINGS tab, parent summary and returning-parent page. Registration numbers TWY26-xxxx remain internal bookkeeping references. Parents return by searching and selecting the child’s name/class, then entering the registered primary telephone; no reference or access code is required.
 
 ## Recovery
 

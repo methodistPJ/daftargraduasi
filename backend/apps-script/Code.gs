@@ -44,17 +44,25 @@ function verifyEnvelope_(e) {
   return envelope;
 }
 function doPost(e) {
-  var lock=LockService.getScriptLock();
+  var lock=null;
   try {
-    if(!lock.tryLock(25000)) throw error_('BUSY','Sistem sedang mengemas kini tempat. Sila cuba semula.',503);
     var request=verifyEnvelope_(e), action=request.action, input=request.data||{};
-    limit_(request.clientKey+':'+action, action==='public.search'?20:action==='auth.login'?20:40, 60);
-    if(action==='public.search') limit_('search-hour:'+request.clientKey,100,3600);
+    if(action==='public.search'||action==='internal.searchRoster') {
+      if(action==='internal.searchRoster'&&(!request.identity||request.identity.role!=='gateway'))throw error_('UNAUTHORIZED','Permintaan tidak dapat disahkan.',401);
+      limit_(request.clientKey+':'+action,20,60);
+      limit_('search-hour:'+request.clientKey,100,3600);
+      return output_({ok:true,data:{students:action==='internal.searchRoster'?searchRoster_():TWYDomain.search({students:searchRoster_()},input.query)}});
+    }
+    lock=LockService.getScriptLock();
+    if(!lock.tryLock(25000))throw error_('BUSY','Sistem sedang mengemas kini tempat. Sila cuba semula.',503);
+    limit_(request.clientKey+':'+action,action==='auth.login'?5:40,action==='auth.login'?600:60);
     var loaded=loadState_(), state=JSON.parse(JSON.stringify(loaded)), ctx=context_(), result, changed=false, createdFile=null;
     if(action.indexOf('admin.')===0) {ctx=context_(requireAdmin_(request));ctx.role='admin';}
     if(action==='public.state') {var publicConfig=TWYDomain.publicSettings(state);publicConfig.registrationOpen=TWYDomain.canRegister(state);result={settings:publicConfig,quota:TWYDomain.quota(state)};}
-    else if(action==='public.search') {
-      result={students:TWYDomain.search(state,input.query)};
+    else if(action==='public.lookup') {
+      var student=state.students.find(function(s){return s.active&&s.id===input.studentId;});
+      if(!student)throw error_('NOT_FOUND','Sila pilih nama murid daripada hasil carian.',404);
+      result={registered:state.registrations.some(function(r){return r.studentId===student.id;})};
     }
     else if(action==='public.register') {
       result=TWYDomain.register(state,input,ctx);
@@ -62,14 +70,13 @@ function doPost(e) {
       changed=true;
     }
     else if(action==='auth.login') {
-      var student=state.students.find(function(s){return s.active&&s.id===input.studentId;});
-      if(!student)throw error_('NOT_FOUND','Sila pilih nama murid daripada hasil carian.',404);
-      var r=state.registrations.find(function(r){return r.studentId===student.id;});
-      if(!r)result={registered:false};
-      else {
-        result={registered:true,registration:TWYDomain.view(state,r),sessionToken:createSession_(state,r.id)};
-        TWYDomain.audit(state,context_('parent:'+r.id),'PARENT_OPEN_BY_STUDENT',r.id);changed=true;
-      }
+      var normalizedPhone='',storedPhone='';
+      var r=state.registrations.find(function(r){return r.studentId===input.studentId;});
+      try{normalizedPhone=TWYDomain.phone(input.contactPhone);}catch(_){}
+      try{if(r)storedPhone=TWYDomain.phone(r.contactPhone);}catch(_){}
+      if(!r||!normalizedPhone||!equal_(normalizedPhone,storedPhone))throw error_('UNAUTHORIZED','Nama atau nombor telefon tidak sepadan. Gunakan nombor telefon utama semasa mendaftar.',401);
+      result={registered:true,registration:TWYDomain.view(state,r),sessionToken:createSession_(state,r.id)};
+      TWYDomain.audit(state,context_('parent:'+r.id),'PARENT_PHONE_VERIFIED',r.id);changed=true;
     }
     else if(action.indexOf('parent.')===0) {
       var parentId=authorizeParent_(state,request.sessionToken), parentCtx=context_('parent:'+parentId);
@@ -111,23 +118,23 @@ function doPost(e) {
     else if(action==='admin.backup') {result=backup_(state);TWYDomain.audit(state,ctx,'BACKUP_CREATED','BACKUPS');changed=true;}
     else if(action==='admin.export') {result={rows:TWYDomain.dashboard(state).registrations};TWYDomain.audit(state,ctx,'EXPORT_CREATED','REGISTRATIONS');changed=true;}
     else throw error_('NOT_FOUND','Tindakan tidak dijumpai.',404);
-    if(changed) { TWYDomain.assertIntegrity(state);state.revision++;commitState_(state); }
+    if(changed) { TWYDomain.assertIntegrity(state);state.revision++;commitState_(state);if(action==='admin.syncRoster')CacheService.getScriptCache().remove('search-roster-v2'); }
     return output_({ok:true,data:result,revision:state.revision});
   } catch(err) {
     // Delete an uncommitted receipt, but do not destroy it if an ambiguous network failure committed it.
     if(createdFile) {try{var persisted=loadStateFresh_();if(!persisted.receipts.some(function(r){return r.driveFileId===createdFile.getId();}))createdFile.setTrashed(true);}catch(_){/* retain for reconciliation rather than risk deleting a committed receipt */}}
     return output_({ok:false,error:{code:err.code||'INTERNAL_ERROR',message:err.code?err.message:'Sistem tidak dapat melengkapkan permintaan. Sila cuba semula.',status:err.status||(err.code==='QUOTA_FULL'?409:400),details:err.details||null}});
-  } finally { if(lock.hasLock())lock.releaseLock(); }
+  } finally { if(lock&&lock.hasLock())lock.releaseLock(); }
 }
 function createSession_(state,id) {
   var token=random_(),now=Date.now();
-  state.sessions=state.sessions.filter(function(s){return s.expiresAt>now;});
-  state.sessions.push({registrationId:id,tokenHash:mac_('session:'+token),expiresAt:now+8*3600000});
+  state.sessions=state.sessions.filter(function(s){return s.expiresAt>now&&s.authVersion===2;});
+  state.sessions.push({registrationId:id,tokenHash:mac_('session:'+token),authVersion:2,expiresAt:now+8*3600000});
   return token;
 }
 function authorizeParent_(state,token) {
   if(typeof token!=='string'||!/^[a-f0-9]{64}$/.test(token))throw error_('UNAUTHORIZED','Sila log masuk semula.',401);
-  var hash=mac_('session:'+token),s=state.sessions.find(function(s){return s.expiresAt>Date.now()&&equal_(s.tokenHash,hash);});
+  var hash=mac_('session:'+token),s=state.sessions.find(function(s){return s.authVersion===2&&s.expiresAt>Date.now()&&equal_(s.tokenHash,hash);});
   if(!s)throw error_('UNAUTHORIZED','Sesi telah tamat. Sila log masuk semula.',401);
   return s.registrationId;
 }
@@ -177,6 +184,14 @@ function assertAppDatabase_() {
   if(meta.mimeType!=='application/vnd.google-apps.spreadsheet'||!meta.parents||meta.parents.indexOf(required_('DATABASE_FOLDER_ID'))<0)throw error_('UNSAFE_STORAGE','Database mesti berada dalam folder DATABASE yang terhad.',503);
   assertPrivateFolder_(required_('DATABASE_FOLDER_ID'));assertPrivateFolder_(id);
   cache.put(key,'1',60);
+}
+// Cache only name/class/ID; never contacts, registration status, payments or receipts.
+function searchRoster_() {
+  var cache=CacheService.getScriptCache(),key='search-roster-v2',cached=cache.get(key);
+  if(cached){try{return JSON.parse(cached);}catch(_){}}
+  var roster=loadState_().students.filter(function(s){return s.active!==false;}).map(function(s){return {id:s.id,name:s.name,className:s.className,active:true};});
+  var serialized=JSON.stringify(roster);if(serialized.length<80000)cache.put(key,serialized,60);
+  return roster;
 }
 function loadStateFresh_() {
   var r=api_('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(required_('APP_SPREADSHEET_ID'))+'/values/'+encodeURIComponent("'STATE_STORE'!B2:B")+'?valueRenderOption=UNFORMATTED_VALUE');

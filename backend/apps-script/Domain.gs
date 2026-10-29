@@ -20,10 +20,10 @@ globalThis.TWYDomain = (() => {
     return result;
   }
   function phone(value) {
-    let p = String(value || '').replace(/[\s().-]/g, '');
-    if (/^0\d+$/.test(p)) p = '+60' + p.slice(1);
-    else if (/^60\d+$/.test(p)) p = '+' + p;
-    if (!/^\+[1-9]\d{7,14}$/.test(p)) fail('INVALID_PHONE', 'Masukkan nombor telefon yang sah, contohnya 0123456789.');
+    let p = String(value || '').normalize('NFKC').replace(/\D/g, '');
+    if (p.startsWith('0060')) p = p.slice(2);
+    if (p.startsWith('60')) p = '0' + p.slice(2).replace(/^0/, '');
+    if (!/^0[1-9]\d{7,9}$/.test(p)) fail('INVALID_PHONE', 'Masukkan nombor telefon Malaysia yang sah, contohnya 0189044630.');
     return p;
   }
   function amount(value) {
@@ -68,7 +68,7 @@ globalThis.TWYDomain = (() => {
     const student = s.students.find(p => p.id === r.studentId);
     const verifiedCents = paid(s, r.id), totalCents = total(s, r);
     return { id: r.id, reference: r.reference, student: student ? { id: student.id, name: student.name, className: student.className } : null,
-      contactPhone: r.contactPhone, guardians: activeGuardians(s, r).map(({ id, name, phone }) => ({ id, name, phone })),
+      contactPhone: phone(r.contactPhone), guardians: activeGuardians(s, r).map(g => ({ id: g.id, name: g.name, phone: phone(g.phone) })),
       totalCents, verifiedCents, outstandingCents: Math.max(0, totalCents - verifiedCents), overpaymentCents: Math.max(0, verifiedCents - totalCents),
       seatsHeld: r.seatsHeld, seats: seatsFor(s, r), status: r.status, createdAt: r.createdAt, updatedAt: r.updatedAt,
       payments: s.payments.filter(p => p.registrationId === r.id).map(({ id, amountCents, status, createdAt, reviewedAt, reviewNote, receiptId }) => ({ id, amountCents, status, createdAt, reviewedAt, reviewNote, receiptId })) };

@@ -1,3 +1,7 @@
+# Phone verification and fast search — 29 October 2026
+
+Latest validation: 86 automated tests, 15 isolated HTTP scenarios and browser checks of wrong-phone rejection, matching-phone access and automatic +60/separator normalization. Regression coverage includes existing +60 records, revocation of name-only sessions, cache privacy, bounded search results, internal roster-route isolation, and different searches using one cached roster. Earlier reports below describe previous versions.
+
 # Name lookup update — 28 October 2026
 
 Latest checks: 73 automated tests, 15 loopback HTTP scenarios, and browser verification of an existing registered pupil, an unregistered pupil, carrying the selected name into registration, and successful registration without a reference/code. Real API results are in QA_NAME_LOOKUP_LIVE.json. No dummy registrations are submitted to production. Previous deployment-stage integration results below are historical.
