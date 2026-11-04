@@ -10,7 +10,7 @@ All mutations operate on a cloned state inside LockService.getScriptLock(). One 
 
 ## Guardian quota
 
-AVAILABLE = CAPACITY − RESERVED − CONFIRMED. Only active, held guardians consume seats. Students never consume guardian capacity. Verified funds first cover the RM100 student package, then complete RM30 guardian units confirm corresponding seats. Remaining guardians stay reserved. Uploading a receipt has no quota side effect. Removing guardians preserves payment history and flags excess funds for review.
+AVAILABLE = CAPACITY − RESERVED − CONFIRMED. Only active, held guardians consume seats. Students never consume guardian capacity. Verified funds first cover the RM120 student package, then complete RM30 guardian units confirm corresponding seats. Remaining guardians stay reserved. Uploading a receipt has no quota side effect. Removing guardians preserves payment history and flags excess funds for review.
 
 No automatic reservation expiry is configured. Only an authorized organizer can release unpaid seats with a reason; ordinary parent contact edits cannot silently re-reserve released seats. Re-reservation is explicit and capacity-checked.
 

@@ -10,7 +10,7 @@ Log masuk dengan akaun Google urus setia yang dibenarkan. Pendaftaran dibuka pad
 
 1. Pilih nama murid dan kelas daripada carian.
 2. Nyatakan waris yang hadir dan nombor telefon utama. Murid sahaja tetap memerlukan nombor telefon penjaga.
-3. Semak jumlah: RM100 murid + RM30 setiap waris.
+3. Semak jumlah: RM120 murid + RM30 setiap waris.
 4. Bayar kepada CIMB BANK, PIBG SK METHODIST PJ, [rujuk nombor akaun rasmi pada portal]. Tulis rujukan transaksi **123 GRADUASI**.
 5. Muat naik resit atau pilih muat naik kemudian. Untuk kemas kini kemudian, cari nama anak melalui Semak / Kemaskini dan masukkan nombor telefon utama yang didaftarkan.
 6. Baca panduan pakaian sebelum kembali ke laman utama.

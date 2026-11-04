@@ -17,7 +17,7 @@ Latest checks: 73 automated tests, 15 loopback HTTP scenarios, and browser verif
 Covered behavior:
 
 - Partial-name student matching with class and six-result bound; unknown/short queries rejected.
-- Student-only RM100, one guardian RM130, four guardians RM220.
+- Student-only RM120, one guardian RM150, four guardians RM240.
 - Invalid phones/names/guardian IDs rejected; duplicate student registrations and retry duplication prevented.
 - Reserved/confirmed/available arithmetic; final-seat concurrent requests serialized; full quota still permits student-only registration.
 - Receipt upload remains pending, does not reserve twice, and is idempotent.
@@ -41,7 +41,7 @@ The local app was opened in the Codex browser and inspected through DOM/accessib
 - Phone viewport 390 × 844 and tablet viewport 768 × 1024, using a same-origin viewport harness. Harness is excluded from production build.
 - Student search, class selection, student-only fee and deferred receipt registration.
 - Success confirmation without reference or access code, followed by the dress-code guide.
-- Returning-parent login, adding four guardians, RM220 summary, same-reference update.
+- Returning-parent login, adding four guardians, RM240 summary, same-reference update.
 - A dummy PNG receipt uploaded through the UI to the existing registration; successful receipt state observed.
 - Student and guardian full-body guide, mobile carousel, optional-blazer wording.
 - Admin dashboard totals and class filter, using dummy records only.
@@ -58,7 +58,7 @@ The production workbook was restored with 56 active students, zero test registra
 
 GitHub Pages deployment passed. Real Google sign-in to the allowlisted organizer account reached the dashboard. The organizer Backup action succeeded and was audited against the real account; bank/quota settings were verified and registration was opened through the organizer interface.
 
-The live parent UI was inspected through student search and a four-guardian RM220 payment summary, then closed without submitting test records. The actual site was rendered in 390px and 768px iframe viewports; document widths matched the viewport widths with no horizontal overflow. Dress-code guide layout and illustration loading were inspected.
+The live parent UI was inspected through student search and a four-guardian RM240 payment summary, then closed without submitting test records. The actual site was rendered in 390px and 768px iframe viewports; document widths matched the viewport widths with no horizontal overflow. Dress-code guide layout and illustration loading were inspected.
 
 Real bank transactions were not performed. Payment verification and quota-transition rules were exercised with dummy data in the automated/local tests; the live integration used dummy receipt submissions. No real family receipt was used as test data.
 
