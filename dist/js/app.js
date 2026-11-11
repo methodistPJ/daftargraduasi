@@ -1,6 +1,6 @@
-import {drawPassQR} from './qr-display.js?v=29bdebcff0c4';
-import {formatPhone,bindPhoneInputs} from './phone.js?v=29bdebcff0c4';
-import {api,config,money,escapeHTML as E,key,receiptPayload} from './api.js?v=29bdebcff0c4';
+import {drawPassQR} from './qr-display.js?v=f2a22bed1ab5';
+import {formatPhone,bindPhoneInputs} from './phone.js?v=f2a22bed1ab5';
+import {api,config,money,escapeHTML as E,key,receiptPayload} from './api.js?v=f2a22bed1ab5';
 const $=s=>document.querySelector(s),dialog=$('#flow-dialog'),content=$('#flow-content');
 let official=null,sessionToken='',currentRegistration=null,draft=null,success=null,guideReturn=false,guideGroup='students',previousFocus=null,busy=false;
 const labels={PENDING:'Menunggu semakan',VERIFIED:'Disahkan',REJECTED:'Perlu pembetulan'};
