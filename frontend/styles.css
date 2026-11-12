@@ -18,3 +18,10 @@
 .scan-video[hidden]{display:none}.is-pass .flow-panel{padding:24px 28px 20px}.is-pass .flow-mini-logo{width:40px;margin-bottom:10px}.is-pass .flow-panel h2{font-size:28px}.is-pass .flow-panel>p.lead{margin-bottom:15px}.is-pass .pass-card{padding:10px 12px}.is-pass .pass-card h3{font-size:20px}.is-pass .pass-card canvas{width:min(220px,100%);margin:10px auto}.is-pass .payment-options{margin-top:14px}
 
 .attendance-list{margin:18px 0}.attendance-person{display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid #dfd4be}.attendance-person input{width:22px;height:22px;accent-color:var(--navy);flex-shrink:0}.attendance-person strong{display:block;font-size:13px}.attendance-person small{display:block;font-size:11px;color:var(--muted);margin-top:3px}
+
+.pending-status{position:sticky;bottom:0;z-index:2;display:flex;align-items:center;gap:10px;margin:0;padding:12px 22px;background:#fff7e6;color:#1e2a5a;font-weight:650;font-size:13px;border-top:1px solid #e3d6bb}
+.pending-status:empty{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);padding:0;border:0}
+.pending-status:empty::before{content:none}
+.pending-status::before{content:"";width:14px;height:14px;flex:none;border:2px solid #c2b7d8;border-top-color:#1e2a5a;border-radius:50%;animation:pending-spin .7s linear infinite}
+@keyframes pending-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.pending-status::before{animation:none}}

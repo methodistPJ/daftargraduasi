@@ -15,6 +15,6 @@ const scriptFiles=(await fs.readdir(path.join(root,'dist/js'))).filter(f=>f.ends
 const versionFiles=['styles.css','admin.css','privacy.css','config.js',...scriptFiles];
 const digest=createHash('sha256');for(const f of versionFiles)digest.update(await fs.readFile(path.join(root,'dist',f)));
 const assetVersion=digest.digest('hex').slice(0,12);
-for(const f of scriptFiles){const target=path.join(root,'dist',f);const source=await fs.readFile(target,'utf8');await fs.writeFile(target,source.replace(/from (['"])(\.\/[^'"]+\.js)\1/g,(_m,q,url)=>'from '+q+url+'?v='+assetVersion+q));}
+for(const f of scriptFiles){const target=path.join(root,'dist',f);const source=await fs.readFile(target,'utf8');await fs.writeFile(target,source.replace(/(\bfrom |\bimport\()(['"])(\.\/[^'"]+\.js)\2/g,(_m,prefix,q,url)=>prefix+q+url+'?v='+assetVersion+q));}
 for(const f of ['index.html','admin.html','privacy.html']){const target=path.join(root,'dist',f);const source=await fs.readFile(target,'utf8');await fs.writeFile(target,source.replace(/((?:src|href)=['"])([^'"?#]+\.(?:css|js))(['"])/g,(_m,prefix,url,suffix)=>prefix+url+'?v='+assetVersion+suffix));}
 console.log('Versioned browser assets:',assetVersion);

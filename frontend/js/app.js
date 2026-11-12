@@ -1,4 +1,4 @@
-import {drawPassQR} from './qr-display.js';
+import {pending} from './pending.js';
 import {formatPhone,bindPhoneInputs} from './phone.js';
 import {api,config,money,escapeHTML as E,key,receiptPayload} from './api.js';
 const $=s=>document.querySelector(s),dialog=$('#flow-dialog'),content=$('#flow-content');
@@ -7,34 +7,180 @@ const labels={PENDING:'Menunggu semakan',VERIFIED:'Disahkan',REJECTED:'Perlu pem
 if(config.preview)$('#preview-banner').hidden=false;
 function toast(message){const el=$('#toast');el.textContent=message;el.hidden=false;setTimeout(()=>{el.hidden=true;},4000);}
 function message(text){let el=content.querySelector('.form-message');if(!el){el=document.createElement('div');el.className='form-message';el.setAttribute('role','alert');content.querySelector('.flow-panel')?.append(el);}el.textContent=text;el.scrollIntoView({block:'nearest'});}
-function showDialog(html){if(!dialog.open){previousFocus=document.activeElement;dialog.showModal();document.body.style.overflow='hidden';}content.innerHTML=html;dialog.classList.toggle('is-guide',!!content.querySelector('.guide-panel'));dialog.classList.toggle('is-pass',!!content.querySelector('#attendance-qr'));bindPhoneInputs(content);dialog.scrollTop=0;setTimeout(()=>{const f=content.querySelector('h2');if(f){f.tabIndex=-1;f.focus({preventScroll:true});}},0);}
-function closeDialog(){if(busy)return;dialog.close();document.body.style.overflow='';previousFocus?.focus();}
-$('#close-flow').addEventListener('click',()=>{if(success){showGuide(true);return;}closeDialog();});
-dialog.addEventListener('cancel',e=>{if(busy||success){e.preventDefault();if(success)showGuide(true);}else document.body.style.overflow='';});
+let cancelStudentSearch = () => {};
+function showDialog(html){cancelStudentSearch();if(!dialog.open){previousFocus=document.activeElement;dialog.showModal();document.body.style.overflow='hidden';}content.innerHTML=html;dialog.classList.toggle('is-guide',!!content.querySelector('.guide-panel'));dialog.classList.toggle('is-pass',!!content.querySelector('#attendance-qr'));bindPhoneInputs(content);dialog.scrollTop=0;setTimeout(()=>{const f=content.querySelector('h2');if(f){f.tabIndex=-1;f.focus({preventScroll:true});}},0);}
+function closeDialog(){if(busy)return;cancelStudentSearch();dialog.close();document.body.style.overflow='';previousFocus?.focus();}
+$('#close-flow').addEventListener('click',()=>{if(busy)return;if(success){showGuide(true);return;}closeDialog();});
+dialog.addEventListener('cancel',e=>{if(busy||success){e.preventDefault();if(success&&!busy)showGuide(true);}else {cancelStudentSearch();document.body.style.overflow='';}});
 const miniLogo=()=>'<img class="flow-mini-logo" src="assets/logo-secondary.webp" alt="The Wonder Years 2026">';
 function panel(title,lead,body,step=0){return `<div class="flow-panel">${miniLogo()}${step?`<p class="step-label">PENDAFTARAN · LANGKAH ${step} DARIPADA 3</p><div class="step-dots" aria-hidden="true">${[1,2,3].map(n=>`<span class="${n<=step?'active':''}"></span>`).join('')}</div>`:''}<h2 id="flow-title">${title}</h2>${lead?`<p class="lead">${lead}</p>`:''}${body}</div>`;}
-function setBusy(value){busy=value;content.querySelectorAll('button,input,select').forEach(e=>{if(value){e.dataset.wasDisabled=e.disabled?'1':'0';e.disabled=true;}else if(e.dataset.wasDisabled!==undefined){e.disabled=e.dataset.wasDisabled==='1';delete e.dataset.wasDisabled;}});content.setAttribute('aria-busy',value?'true':'false');}
-async function run(task){if(busy)return;content.querySelector('.form-message')?.remove();setBusy(true);try{await task();}catch(e){message(e.message);if(e.code==='QUOTA_FULL')await refreshPublic().catch(()=>{});}finally{setBusy(false);}}
-function deadlineLabel(){return new Intl.DateTimeFormat('ms-MY',{day:'numeric',month:'long',year:'numeric',timeZone:'Asia/Kuala_Lumpur'}).format(new Date((official?.settings.paymentDeadline||'2026-11-20')+'T00:00:00+08:00'));}
-async function refreshPublic(){official=await api('public.state');$('#student-package-price').textContent=money(official.settings.studentFeeCents);$('#payment-deadline').textContent=deadlineLabel()+'.';const {quota:q}=official;$('#quota-label').textContent=official.settings.registrationOpen?`${q.available} tempat ibu bapa masih tersedia`:'Pendaftaran belum dibuka';$('#quota-confirmed').style.width=(q.confirmed/q.capacity*100)+'%';$('#quota-reserved').style.width=(q.reserved/q.capacity*100)+'%';$('.quota-track').setAttribute('aria-label',`${q.confirmed} disahkan, ${q.reserved} tempahan sementara, ${q.available} tersedia daripada ${q.capacity}`);return official;}
-refreshPublic().catch(()=>{$('#quota-label').textContent='Pendaftaran sedang disediakan';$('.quota-legend').hidden=true;});
+async function run(task, feedback = 'Sedang menyemak…') {
+  if (busy) return;
+  busy = true;
+  content.querySelector('.form-message')?.remove();
+  const done = pending(content, $('#flow-status'), feedback);
+  const close = $('#close-flow');
+  close.disabled = true;
+  try {
+    await task();
+  } catch (e) {
+    message(e.message);
+    if (e.code === 'QUOTA_FULL') refreshPublic().catch(() => {});
+  } finally {
+    done();
+    close.disabled = false;
+    busy = false;
+  }
+}
+
+const dateFormatter = new Intl.DateTimeFormat('ms-MY',{
+  day:'numeric',month:'long',year:'numeric',timeZone:'Asia/Kuala_Lumpur'
+});
+function deadlineLabel(){return dateFormatter.format(new Date((official?.settings.paymentDeadline||'2026-11-20')+'T00:00:00+08:00'));}
+
+let publicRequest;
+function refreshPublic({ afterWrite = false } = {}) {
+  if (afterWrite) publicRequest = null;
+  if (publicRequest) return publicRequest;
+  const request = api('public.state').then(result => {
+    if (publicRequest !== request) return result;
+    official = result;
+    $('#student-package-price').textContent = money(official.settings.studentFeeCents);
+    $('#payment-deadline').textContent = deadlineLabel() + '.';
+    const {quota:q} = official;
+    $('#quota-label').textContent = official.settings.registrationOpen
+      ? `${q.available} tempat ibu bapa masih tersedia` : 'Pendaftaran belum dibuka';
+    $('#quota-confirmed').style.width = (q.confirmed / q.capacity * 100) + '%';
+    $('#quota-reserved').style.width = (q.reserved / q.capacity * 100) + '%';
+    $('.quota-track').setAttribute('aria-label', `${q.confirmed} disahkan, ${q.reserved} tempahan sementara, ${q.available} tersedia daripada ${q.capacity}`);
+    $('.quota-legend').hidden = false;
+    return result;
+  }).finally(() => {
+    if (publicRequest === request) publicRequest = null;
+  });
+  publicRequest = request;
+  return request;
+}
+refreshPublic().catch(()=>{if(!official){$('#quota-label').textContent='Pendaftaran sedang disediakan';$('.quota-legend').hidden=true;}});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshPublic().catch(()=>{});});
 document.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click',()=>{const a=b.dataset.action;if(a==='register')startRegistration();if(a==='return')showLogin();if(a==='guide')showGuide(false);if(a==='privacy')showPrivacy();}));
-async function startRegistration(){
-  showDialog(panel('Hari istimewa kita.','Sebentar, kami semak ketersediaan tempat.','<p class="info-note">Menghubungi sistem pendaftaran…</p>'));
-  try{await refreshPublic();if(!official.settings.registrationOpen){showDialog(panel('Kita jumpa sebentar lagi.','Pendaftaran belum dibuka. Nantikan makluman rasmi pihak sekolah.','<div class="flow-actions"><button class="button button-navy" id="not-open-close">KEMBALI KE LAMAN UTAMA</button></div>'));$('#not-open-close').onclick=closeDialog;return;}
-    draft={student:null,contactPhone:'',guardians:[],attending:false,idempotencyKey:key(),receiptKey:key(),updateKey:key(),saved:false};sessionToken='';currentRegistration=null;success=null;showStudent();
-  }catch(e){message(e.message);}
+function startRegistration() {
+  draft = {student:null,contactPhone:'',guardians:[],attending:false,idempotencyKey:key(),receiptKey:key(),updateKey:key(),saved:false};
+  sessionToken = '';
+  currentRegistration = null;
+  success = null;
+  showStudent(false, refreshPublic().then(result => ({result}), error => ({error})));
 }
-function showStudent(returning=false){
+
+function showStudent(returning = false, openingCheck) {
   showDialog(panel(returning?'Semak pendaftaran anak.':'Siapa bintang kecil kita?','Taip sekurang-kurangnya tiga huruf nama anak, kemudian pilih nama dan kelas yang betul.',`<div class="field search-wrap"><span id="student-search-label">Nama murid</span><input id="student-search" type="search" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-controls="student-options" aria-expanded="false" aria-labelledby="student-search-label" value="${E(draft.student?.name||'')}" placeholder="Cari nama anak…"><ul id="student-options" class="suggestions" role="listbox"></ul><small id="search-status" role="status"></small></div><div id="student-selected">${selectedStudent()}</div><div class="hp-field" aria-hidden="true"><label>Laman web<input id="website" autocomplete="off" tabindex="-1"></label></div><div class="flow-actions"><button class="button button-navy" id="student-next" ${draft.student?'':'disabled'}>${returning?'SEMAK PENDAFTARAN':'SETERUSNYA'} <span aria-hidden="true">→</span></button></div>`,returning?0:1));
-  const input=$('#student-search');let timer,controller,serial=0;
-  input.oninput=()=>{draft.student=null;$('#student-selected').innerHTML='';$('#student-next').disabled=true;clearTimeout(timer);controller?.abort();const query=input.value.trim(),version=++serial;$('#student-options').innerHTML='';input.setAttribute('aria-expanded','false');$('#search-status').textContent=query.length<3?'Taip sekurang-kurangnya tiga huruf.':'';if(query.length<3)return;
-    timer=setTimeout(async()=>{controller=new AbortController();$('#search-status').textContent='Mencari nama…';try{const {students}=await api('public.search',{query},'',{signal:controller.signal});if(version!==serial)return;$('#search-status').textContent=students.length?'Pilih nama yang sepadan.':'Tiada padanan. Cuba bahagian lain nama anak.';$('#student-options').innerHTML=students.map((s,i)=>`<li role="option" id="student-option-${i}" aria-selected="false"><button type="button" data-index="${i}"><span>${E(s.name)}</span><span class="class-badge">${E(s.className)}</span></button></li>`).join('');input.setAttribute('aria-expanded',String(students.length>0));$('#student-options').querySelectorAll('button').forEach(b=>b.onclick=()=>{draft.student=students[Number(b.dataset.index)];input.value=draft.student.name;$('#student-options').innerHTML='';input.setAttribute('aria-expanded','false');$('#student-selected').innerHTML=selectedStudent();$('#student-next').disabled=false;$('#search-status').textContent='Nama dipilih.';$('#student-next').focus();});}catch(e){if(e.name!=='AbortError'&&version===serial)$('#search-status').textContent=e.message;}},180);
+  const input = $('#student-search');
+  const options = $('#student-options');
+  const status = $('#search-status');
+  const next = $('#student-next');
+  const selected = $('#student-selected');
+  const searchResults = new Map();
+  let timer, controller, serial = 0, students = [];
+
+  cancelStudentSearch = () => {
+    serial++;
+    clearTimeout(timer);
+    controller?.abort();
+    searchResults.clear();
+    cancelStudentSearch = () => {};
   };
-  input.onkeydown=e=>{if(e.key==='ArrowDown'){e.preventDefault();$('#student-options button')?.focus();}};
-  $('#student-options').onkeydown=e=>{const bs=[...$('#student-options').querySelectorAll('button')],i=bs.indexOf(document.activeElement);if(e.key==='ArrowDown'){e.preventDefault();bs[Math.min(i+1,bs.length-1)]?.focus();}if(e.key==='ArrowUp'){e.preventDefault();if(i<=0)input.focus();else bs[i-1]?.focus();}if(e.key==='Escape')input.focus();};
-  $('#student-next').onclick=()=>run(async()=>{draft.website=$('#website').value;if(!draft.student)return;const result=await api('public.lookup',{studentId:draft.student.id,website:draft.website||''});if(result.registered){showPhoneVerification();}else if(returning){showNotRegistered();}else{if(!official)await refreshPublic();showGuardians(false);}});
+
+  function renderResults(matches) {
+    students = matches;
+    status.textContent = matches.length ? 'Pilih nama yang sepadan.' : 'Tiada padanan. Cuba bahagian lain nama anak.';
+    options.innerHTML = matches.map((student, index) =>
+      `<li role="option" id="student-option-${index}" aria-selected="false"><button type="button" data-index="${index}"><span>${E(student.name)}</span><span class="class-badge">${E(student.className)}</span></button></li>`
+    ).join('');
+    input.setAttribute('aria-expanded', String(matches.length > 0));
+  }
+
+  input.oninput = () => {
+    clearTimeout(timer);
+    controller?.abort();
+    const version = ++serial;
+    const query = input.value.trim();
+    const cacheKey = query.toLowerCase();
+    draft.student = null;
+    students = [];
+    selected.replaceChildren();
+    next.disabled = true;
+    options.replaceChildren();
+    input.setAttribute('aria-expanded', 'false');
+    status.textContent = query.length < 3 ? 'Taip sekurang-kurangnya tiga huruf.' : 'Mencari nama…';
+    if (query.length < 3) return;
+
+    const cached = searchResults.get(cacheKey);
+    if (cached && Date.now() < cached.expires) {
+      renderResults(cached.students);
+      return;
+    }
+    timer = setTimeout(async () => {
+      controller = new AbortController();
+      try {
+        const result = await api('public.search', {query}, '', {signal:controller.signal});
+        if (version !== serial || !dialog.open) return;
+        if (searchResults.size >= 8) searchResults.delete(searchResults.keys().next().value);
+        searchResults.set(cacheKey, {students:result.students, expires:Date.now() + 30000});
+        renderResults(result.students);
+      } catch (e) {
+        if (e.name !== 'AbortError' && version === serial && dialog.open) status.textContent = e.message;
+      }
+    }, 180);
+  };
+  options.onclick = event => {
+    const button = event.target.closest('button[data-index]');
+    if (!button) return;
+    draft.student = students[Number(button.dataset.index)];
+    input.value = draft.student.name;
+    options.replaceChildren();
+    input.setAttribute('aria-expanded', 'false');
+    selected.innerHTML = selectedStudent();
+    next.disabled = false;
+    status.textContent = 'Nama dipilih.';
+    next.focus();
+  };
+  input.onkeydown = e => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      options.querySelector('button')?.focus();
+    }
+  };
+  options.onkeydown = e => {
+    const buttons = [...options.querySelectorAll('button')];
+    const index = buttons.indexOf(document.activeElement);
+    if (e.key === 'ArrowDown') {e.preventDefault();buttons[Math.min(index+1,buttons.length-1)]?.focus();}
+    if (e.key === 'ArrowUp') {e.preventDefault();if(index<=0)input.focus();else buttons[index-1]?.focus();}
+    if (e.key === 'Escape') {e.stopPropagation();input.focus();}
+  };
+  const showClosed = result => {
+    if (result?.settings.registrationOpen !== false || !dialog.open || !input.isConnected) return;
+    showDialog(panel('Kita jumpa sebentar lagi.','Pendaftaran belum dibuka. Nantikan makluman rasmi pihak sekolah.','<div class="flow-actions"><button class="button button-navy" id="not-open-close">KEMBALI KE LAMAN UTAMA</button></div>'));
+    $('#not-open-close').onclick = closeDialog;
+  };
+  openingCheck?.then(({result}) => {if (!busy) showClosed(result);});
+  next.onclick = () => run(async () => {
+    draft.website = $('#website').value;
+    if (!draft.student) return;
+    if (openingCheck) {
+      const check = await openingCheck;
+      if (check.error) openingCheck = refreshPublic().then(result => ({result}), error => ({error}));
+      const {result, error} = check.error ? await openingCheck : check;
+      if (error) throw error;
+      if (!result.settings.registrationOpen) {showClosed(result);return;}
+    }
+    const result = await api('public.lookup',{studentId:draft.student.id,website:draft.website||''});
+    if (result.registered) showPhoneVerification();
+    else if (returning) showNotRegistered();
+    else {
+      if (!official) await refreshPublic();
+      showGuardians(false);
+    }
+  }, 'Sedang menyemak pendaftaran murid…');
 }
 function selectedStudent(){return draft?.student?`<div class="selected-student"><strong>${E(draft.student.name)}</strong>Kelas ${E(draft.student.className)}</div>`:'';}
 function guardianFields(list){return list.map((g,i)=>`<section class="guardian-row"><h3>WARIS ${i+1}</h3><button type="button" class="guardian-remove" data-remove="${i}">Buang waris</button><label class="field"><span>Nama waris ${i+1}</span><input data-guardian-name="${i}" autocomplete="name" maxlength="100" value="${E(g.name)}" required></label><label class="field"><span>Nombor telefon waris ${i+1} <small>(pilihan; nombor utama digunakan jika kosong)</small></span><input data-guardian-phone="${i}" type="tel" autocomplete="tel" value="${E(g.phone||'')}" placeholder="0123456789"></label></section>`).join('');}
@@ -57,7 +203,7 @@ function showSummary(editing){
   const total=official.settings.studentFeeCents+draft.guardians.length*official.settings.guardianFeeCents;
   showDialog(panel(editing?'Semak perubahan anda.':'Satu hari penuh kenangan.','Semak nama, waris dan jumlah sebelum mengesahkan.',`${selectedStudent()}${draft.guardians.length?`<p class="quiet-note">Waris: ${draft.guardians.map(g=>E(g.name)).join(' · ')}</p>`:'<p class="quiet-note">Murid sahaja, tanpa waris.</p>'}${feeList(editing)}${editing?`<p class="info-note">Bayaran terdahulu dikekalkan. Jika ada lebihan selepas waris dibuang, urus setia akan menyemaknya; tiada bayaran balik automatik.</p><div class="flow-actions"><button class="button button-plain" id="summary-back">KEMBALI</button><button class="button button-navy" id="save-update">SIMPAN PERUBAHAN</button></div>`:`${bankDetails()}<p class="info-note">Pendaftaran menyimpan tempat sementara. Pengesahan akhir selepas bayaran disemak. Tarikh akhir: <strong>${E(deadlineLabel())}.</strong></p><label class="field"><span>Resit pembayaran <small>(PNG, JPG atau PDF, maksimum 5 MB)</small></span><input id="initial-receipt" type="file" accept="image/png,image/jpeg,application/pdf"></label><label class="field"><span>Amaun dalam resit (RM)</span><input id="initial-amount" type="number" inputmode="decimal" step="0.01" min="0.01" value="${(total/100).toFixed(2)}"></label><div class="payment-options"><button class="button button-navy" id="save-with-receipt">SAHKAN & MUAT NAIK RESIT</button><button class="button button-plain" id="save-later">SAHKAN & MUAT NAIK KEMUDIAN</button><button class="text-button" id="summary-back">Kembali dan semak maklumat</button></div>`}`,editing?0:3));bindCopies();
   $('#summary-back').onclick=()=>{if(draft.saved){showProfile();return;}showGuardians(editing);};
-  if(editing){$('#save-update').onclick=()=>run(async()=>{await refreshPublic();const result=await api('parent.update',{contactPhone:draft.contactPhone,guardians:draft.guardians,idempotencyKey:draft.updateKey,reserveSeats:draft.reserveSeats},sessionToken);currentRegistration=result.registration;draft.updateKey=key();showProfile();toast('Maklumat berjaya dikemas kini.');});return;}
+  if(editing){$('#save-update').onclick=()=>run(async()=>{await refreshPublic();const result=await api('parent.update',{contactPhone:draft.contactPhone,guardians:draft.guardians,idempotencyKey:draft.updateKey,reserveSeats:draft.reserveSeats},sessionToken);currentRegistration=result.registration;draft.updateKey=key();showProfile();toast('Maklumat berjaya dikemas kini.');refreshPublic({afterWrite:true}).catch(()=>{});}, 'Sedang menyimpan perubahan…');return;}
   $('#save-with-receipt').onclick=()=>saveRegistration(true);
   $('#save-later').onclick=()=>saveRegistration(false);
 }
@@ -67,8 +213,9 @@ async function saveRegistration(withReceipt){await run(async()=>{
   await refreshPublic();
   if(!draft.saved){const result=await api('public.register',{studentId:draft.student.id,contactPhone:draft.contactPhone,guardians:draft.guardians,idempotencyKey:draft.idempotencyKey,website:draft.website||''});currentRegistration=result.registration;sessionToken=result.sessionToken;draft.saved=true;success={registration:result.registration,withReceipt:false};}
   if(withReceipt){try{const result=await api('parent.receipt',payload,sessionToken);currentRegistration=result.registration;success.registration=result.registration;success.withReceipt=true;}catch(e){message('Pendaftaran sudah disimpan. Resit belum diterima: '+e.message+' Cuba muat naik lagi, atau pilih muat naik kemudian.');return;}}
-  await refreshPublic();showSuccess();
-});}
+  showSuccess();
+  refreshPublic({afterWrite:true}).catch(()=>{});
+}, withReceipt ? 'Sedang menyimpan pendaftaran dan memuat naik resit…' : 'Sedang menyimpan pendaftaran…');}
 function showSuccess(){
   const title=success.withReceipt?'Resit berjaya diterima!':'Pendaftaran berjaya direkodkan!';
   const lead=success.withReceipt?'Terima kasih! Bukti pembayaran anda telah diterima dan akan disemak oleh pihak urus setia. Sekiranya terdapat sebarang isu, kami akan menghubungi anda melalui nombor telefon yang didaftarkan.':'Kehadiran anda telah didaftarkan. Pengesahan akhir tempat adalah tertakluk kepada pembayaran. Sila muat naik resit sebelum tarikh akhir yang ditetapkan.';
@@ -83,7 +230,7 @@ async function showLogin(){
 function showPhoneVerification(){
   showDialog(panel('Sahkan nombor telefon.','Masukkan nombor telefon utama yang digunakan semasa mendaftar untuk membuka rekod anak.',`${selectedStudent()}<form id="verify-phone-form"><label class="field"><span>Nombor telefon yang didaftarkan</span><input id="verify-phone" type="tel" autocomplete="tel" placeholder="0189044630" required><small>Nombor sahaja, tanpa ruang atau sengkang. Format akan dikemaskan secara automatik.</small></label><div class="flow-actions"><button type="button" class="button button-plain" id="phone-back">CARI NAMA LAIN</button><button type="submit" class="button button-navy">BUKA PENDAFTARAN</button></div></form>`));
   $('#phone-back').onclick=()=>showStudent(true);
-  $('#verify-phone-form').onsubmit=e=>{e.preventDefault();run(async()=>{const contactPhone=formatPhone($('#verify-phone').value);if(!/^0[1-9]\d{7,9}$/.test(contactPhone))throw new Error('Masukkan nombor telefon yang sah, contohnya 0189044630.');const result=await api('auth.login',{studentId:draft.student.id,contactPhone});sessionToken=result.sessionToken;currentRegistration=result.registration;if(!official)await refreshPublic();showProfile();});};
+  $('#verify-phone-form').onsubmit=e=>{e.preventDefault();run(async()=>{const contactPhone=formatPhone($('#verify-phone').value);if(!/^0[1-9]\d{7,9}$/.test(contactPhone))throw new Error('Masukkan nombor telefon yang sah, contohnya 0189044630.');const result=await api('auth.login',{studentId:draft.student.id,contactPhone});sessionToken=result.sessionToken;currentRegistration=result.registration;if(!official)await refreshPublic();showProfile();}, 'Sedang menyemak nombor telefon…');};
 }
 function showNotRegistered(){
   showDialog(panel('Anak anda belum berdaftar.','Nama telah dijumpai dalam senarai murid, tetapi pendaftaran graduasi belum dibuat.',`${selectedStudent()}<div class="flow-actions"><button class="button button-plain" id="search-again">CARI NAMA LAIN</button><button class="button button-navy" id="register-selected">DAFTAR SEKARANG</button></div>`));
@@ -94,13 +241,13 @@ function history(r){return `<section class="payment-history"><h3>Sejarah bayaran
 function showProfile(){
   const r=currentRegistration;success=null;
   showDialog(panel('Pendaftaran anda.','Semak bayaran, kemas kini waris atau muat naik resit di sini.',`<div class="return-heading"><h3>${E(r.student.name)}</h3><span class="class-badge">Kelas ${E(r.student.className)}</span></div>${!r.seatsHeld&&r.guardians.length?'<p class="form-message">Tempahan waris telah dilepaskan oleh urus setia. Tempahan semula tertakluk kepada baki kuota.</p>':''}<ul class="summary-list"><li><span>Waris</span><strong>${r.guardians.length} orang</strong></li><li><span>Jumlah pakej</span><strong>${money(r.totalCents)}</strong></li><li><span>Bayaran disahkan</span><strong>${money(r.verifiedCents)}</strong></li><li class="total"><span>Baki bayaran</span><strong>${money(r.outstandingCents)}</strong></li></ul>${r.overpaymentCents?`<p class="info-note">Lebihan ${money(r.overpaymentCents)} akan disemak urus setia. Tiada bayaran balik automatik.</p>`:''}${r.passEligible?'<button class="button button-navy pass-open" id="open-pass">LIHAT QR KEHADIRAN</button>':'<p class="info-note">QR Kehadiran akan tersedia selepas bayaran penuh disahkan oleh urus setia.</p>'}<button class="add-guardian" id="edit-registration">Kemaskini waris / nombor telefon</button>${history(r)}${bankDetails()}<p class="info-note">Rujukan transaksi bank: <strong>${E(official.settings.bankReference)}</strong>. Bayar baki yang belum dijelaskan sahaja.</p><label class="field"><span>Resit bayaran tambahan atau terdahulu</span><input id="return-receipt" type="file" accept="image/png,image/jpeg,application/pdf"></label><label class="field"><span>Amaun dalam resit ini (RM)</span><input id="return-amount" type="number" inputmode="decimal" min="0.01" step="0.01" value="${(r.outstandingCents/100).toFixed(2)}"></label><div class="payment-options"><button class="button button-navy" id="return-upload">MUAT NAIK RESIT</button><button class="button button-plain" id="return-guide">PANDUAN PAKAIAN MAJLIS</button></div>`));bindCopies();
-  $('#open-pass')?.addEventListener('click',()=>run(showPass));
+  $('#open-pass')?.addEventListener('click',()=>run(showPass, 'Sedang menyediakan QR kehadiran…'));
   $('#edit-registration').onclick=()=>{draft={student:r.student,contactPhone:r.contactPhone,guardians:r.guardians.map(g=>({...g})),attending:r.guardians.length>0,updateKey:key(),reserveSeats:false};showGuardians(true);};
-  let receiptKey=key();$('#return-upload').onclick=()=>run(async()=>{const payload=await receiptPayload($('#return-receipt').files[0],Math.round(Number($('#return-amount').value)*100),receiptKey);const result=await api('parent.receipt',payload,sessionToken);currentRegistration=result.registration;receiptKey=key();showDialog(panel('Resit berjaya diterima!','Terima kasih! Bukti pembayaran anda akan disemak oleh pihak urus setia.',`<p class="info-note">Muat naik resit tidak mengubah kuota atau mengesahkan bayaran secara automatik.</p><div class="flow-actions"><button class="button button-navy" id="receipt-continue">TERUSKAN KE PANDUAN PAKAIAN</button></div>`));$('#receipt-continue').onclick=()=>showGuide(true);await refreshPublic();});
+  let receiptKey=key();$('#return-upload').onclick=()=>run(async()=>{const payload=await receiptPayload($('#return-receipt').files[0],Math.round(Number($('#return-amount').value)*100),receiptKey);const result=await api('parent.receipt',payload,sessionToken);currentRegistration=result.registration;receiptKey=key();showDialog(panel('Resit berjaya diterima!','Terima kasih! Bukti pembayaran anda akan disemak oleh pihak urus setia.',`<p class="info-note">Muat naik resit tidak mengubah kuota atau mengesahkan bayaran secara automatik.</p><div class="flow-actions"><button class="button button-navy" id="receipt-continue">TERUSKAN KE PANDUAN PAKAIAN</button></div>`));$('#receipt-continue').onclick=()=>showGuide(true);refreshPublic({afterWrite:true}).catch(()=>{});}, 'Sedang memuat naik resit…');
   $('#return-guide').onclick=()=>showGuide(false);
 }
 async function showPass(){
-  const {pass}=await api('parent.pass',{},sessionToken);
+  const [{pass}, {drawPassQR}] = await Promise.all([api('parent.pass',{},sessionToken), import('./qr-display.js')]);
   if(!pass.available){await refreshPublic();throw new Error('QR belum tersedia. Bayaran penuh perlu disahkan oleh urus setia.');}
   showDialog(panel('QR Kehadiran.','Satu QR untuk murid bersama semua waris dalam pendaftaran ini.',`<section class="pass-card"><p class="eyebrow">PAS GRADUASI · 2 DISEMBER 2026</p><h3>${E(pass.student.name)}</h3><p>Kelas ${E(pass.student.className)} · ${pass.guardianCount} waris · ${pass.partySize} orang keseluruhan</p><canvas id="attendance-qr" aria-label="QR Kehadiran rasmi graduasi"></canvas><p class="pass-status ${pass.attendance?'used':''}">${pass.checkedInCount?(pass.remainingCount===0?'SEMUA SUDAH HADIR':pass.checkedInCount+' DARIPADA '+pass.partySize+' SUDAH HADIR'):'BAYARAN PENUH DISAHKAN'}</p><p>${E(pass.venue)}</p><p class="quiet-note">Tunjukkan QR ini kepada petugas di pintu masuk. Simpan untuk kegunaan keluarga sendiri.</p></section><div class="payment-options"><a class="button button-navy" id="save-pass" download="TWY2026-QR-Kehadiran.png">SIMPAN QR</a><button class="button button-plain" id="pass-back">KEMBALI KE PENDAFTARAN</button></div>`));
   const canvas=$('#attendance-qr');drawPassQR(canvas,pass.code);$('#save-pass').href=canvas.toDataURL('image/png');$('#pass-back').onclick=showProfile;
