@@ -6,7 +6,7 @@ globalThis.TWYDomain = (() => {
     title: 'The Wonder Years 2026', tagline: 'Six Years of Memories, A Lifetime of Wonder.',
     eventName: 'Majlis Graduasi Tahun 6 SK Methodist Petaling Jaya 2026',
     eventDate: '2026-12-02', eventTime: '14:30', timeZone: 'Asia/Kuala_Lumpur',
-    venue: "D’Buana Hall, Petaling Jaya", paymentDeadline: '2026-11-20',
+    venue: "D’Buana Hall, Petaling Jaya", paymentDeadline: '2026-11-22',
     studentFeeCents: 12000, guardianFeeCents: 3000, capacity: 100, maxGuardians: 4,
     registrationOpen: false, reservationPolicy: 'MANUAL_RELEASE_ONLY',
     bankName: 'CIMB BANK', accountHolder: 'PIBG SK METHODIST PJ', accountNumber: '8003392687', bankReference: '123 GRADUASI', bankQrAsset: '',
