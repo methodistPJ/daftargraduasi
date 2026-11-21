@@ -13,7 +13,7 @@ function harness(){
       newBlob:v=>({getDataAsString:()=>Buffer.from(v.map(x=>(x+256)%256)).toString('latin1')})},
     ContentService:{MimeType:{JSON:'application/json'},createTextOutput:text=>({text,setMimeType(){return this;}})} };
   vm.createContext(ctx);vm.runInContext(domain,ctx);vm.runInContext(adapter,ctx);
-  let state=ctx.TWYDomain.initial([{id:'test-student',name:'MURID DUMMY',className:'6H',active:true}]);state.settings.registrationOpen=true;
+  let state=ctx.TWYDomain.initial([{id:'test-student',name:'MURID DUMMY',className:'6H',active:true}]);state.settings.registrationOpen=true;state.settings.paymentDeadline='2099-11-20';
   const originalCommit=ctx.commitState_;
   ctx.loadState_=()=>structuredClone(state);ctx.loadStateFresh_=()=>structuredClone(state);ctx.commitState_=s=>{state=structuredClone(s);};
   function envelope(action,data={},identity={role:'public'},sessionToken=''){
@@ -59,3 +59,57 @@ test('private roster action rejects a public identity even in a valid envelope',
 function verifiedPassFixture(){const h=harness(),registered=h.call('public.register',registration).data;const context={id:()=>crypto.randomUUID(),now:()=>new Date().toISOString(),actor:'test'};const receipt=h.ctx.TWYDomain.submitReceipt(h.state,registered.registration.id,{idempotencyKey:'pass-test-receipt-key',sha256:'e'.repeat(64),driveFileId:'private-dummy',mimeType:'image/png',sizeBytes:100,amountCents:15000},context);h.call('admin.reviewPayment',{paymentId:receipt.registration.payments[0].id,status:'VERIFIED',verifiedAmountCents:15000},{role:'admin',email:'admin@example.test'});return {h,registered};}
 test('pass endpoint returns no QR for unverified payment and requires parent session',()=>{const h=harness(),r=h.call('public.register',registration).data;assert.equal(h.call('parent.pass',{},undefined,r.sessionToken).data.pass.available,false);assert.equal(h.call('parent.pass',{},undefined,r.sessionToken).data.pass.code,undefined);assert.equal(h.call('parent.pass',{}).error.code,'UNAUTHORIZED');});
 test('one opaque stable QR per registration, inspect and check-in require organizer access',()=>{const {h,registered}=verifiedPassFixture(),admin={role:'admin',email:'admin@example.test'};const a=h.call('parent.pass',{},undefined,registered.sessionToken).data.pass,b=h.call('parent.pass',{},undefined,registered.sessionToken).data.pass;assert.match(a.code,/^TWY26-[a-f0-9]{64}$/);assert.equal(a.code,b.code);assert.ok(!a.code.includes('0123456789'));assert.equal(h.call('admin.inspectPass',{code:a.code}).error.code,'UNAUTHORIZED');assert.equal(h.call('admin.inspectPass',{code:a.code},admin).ok,true);assert.equal(h.call('admin.inspectPass',{code:'TWY26-'+'0'.repeat(64)},admin).error.code,'INVALID_PASS');h.state.settings.eventDate=new Date(Date.now()+8*3600000).toISOString().slice(0,10);assert.equal(h.call('admin.checkIn',{code:a.code,personIds:a.people.map(p=>p.id)},admin).data.alreadyUsed,false);assert.equal(h.call('admin.checkIn',{code:a.code,personIds:a.people.map(p=>p.id)},admin).data.alreadyUsed,true);assert.equal(h.state.audit.filter(a=>a.action==='ATTENDANCE_CHECKED_IN').length,1);});
+
+function adminReceiptFixture() {
+  const h = harness();
+  const registered = h.call('public.register', {...registration, guardians:[]}).data.registration;
+  let created = 0;
+  h.props.RECEIPT_FOLDER_ID = 'private-receipts';
+  h.ctx.assertPrivateFolder_ = () => {};
+  h.ctx.DriveApp = {getFolderById:() => ({createFile:() => {
+    created++;
+    return {getId:() => 'receipt-file-' + created, setTrashed:() => {}};
+  }})};
+  const input = {
+    recordReceipt:true, registrationId:registered.id, method:'CASH',
+    note:'Tajaan guru diterima secara tunai.', amountCents:12000,
+    idempotencyKey:'admin-cash-receipt-test',
+    base64:Buffer.from('%PDF-1.4\nTEST CASH RECORD\n%%EOF').toString('base64'),
+    mimeType:'application/pdf'
+  };
+  return {h,input,get created(){return created;}};
+}
+test('cash recording requires allowed admin, creates evidence once and retains existing state structure', () => {
+  const f = adminReceiptFixture(), {h,input} = f;
+  const fields = Object.keys(h.state).sort();
+  assert.equal(h.call('admin.reviewPayment',input).error.code,'UNAUTHORIZED');
+  const result = h.call('admin.reviewPayment',input,{role:'admin',email:'admin@example.test'});
+  assert.equal(result.ok,true);
+  assert.equal(result.data.registration.verifiedCents,12000);
+  assert.equal(result.data.registration.passEligible,true);
+  assert.deepEqual(Object.keys(result.data),['registration']);
+  assert.deepEqual(Object.keys(h.state).sort(),fields);
+  assert.equal(h.call('admin.reviewPayment',input,{role:'admin',email:'admin@example.test'}).ok,true);
+  assert.equal(f.created,1);
+  assert.equal(h.state.payments.length,1);
+  assert.equal(h.state.receipts.length,1);
+  assert.equal(h.state.audit.filter(a=>a.action==='ADMIN_RECEIPT_RECORDED').length,1);
+  assert.equal(h.call('admin.reviewPayment',{...input,method:'TRANSFER'},{role:'admin',email:'admin@example.test'}).error.code,'IDEMPOTENCY_CONFLICT');
+});
+test('organizer transfer upload remains pending and does not enable attendance pass', () => {
+  const {h,input} = adminReceiptFixture();
+  const result = h.call('admin.reviewPayment',{...input,method:'TRANSFER'},{role:'admin',email:'admin@example.test'});
+  assert.equal(result.ok,true);
+  assert.equal(result.data.registration.verifiedCents,0);
+  assert.equal(result.data.registration.passEligible,false);
+  assert.equal(h.state.payments[0].status,'PENDING');
+  assert.match(h.state.payments[0].reviewNote,/PINDAHAN/);
+  assert.equal(h.call('admin.reviewPayment',{...input,method:'CASH'},{role:'admin',email:'admin@example.test'}).error.code,'IDEMPOTENCY_CONFLICT');
+});
+test('cash input rejects missing note, invalid amount and reused receipt before writing files', () => {
+  for (const change of [{note:''},{amountCents:-1},{method:'OTHER'}]) {
+    const f = adminReceiptFixture();
+    assert.equal(f.h.call('admin.reviewPayment',{...f.input,...change},{role:'admin',email:'admin@example.test'}).ok,false);
+    assert.equal(f.created,0);
+  }
+});

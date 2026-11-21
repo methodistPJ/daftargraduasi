@@ -78,27 +78,49 @@ function doPost(e) {
       result={registered:true,registration:TWYDomain.view(state,r),sessionToken:createSession_(state,r.id)};
       TWYDomain.audit(state,context_('parent:'+r.id),'PARENT_PHONE_VERIFIED',r.id);changed=true;
     }
+    else if(action==='parent.receipt'||action==='admin.reviewPayment'&&input.recordReceipt===true) {
+      var adminReceipt=action==='admin.reviewPayment';
+      var parentId=adminReceipt?TWYDomain.registration(state,input.registrationId).id:authorizeParent_(state,request.sessionToken);
+      var receiptCtx=adminReceipt?ctx:context_('parent:'+parentId);
+      var receiptNote='';
+      if(adminReceipt) {
+        if(['TRANSFER','CASH'].indexOf(input.method)<0)throw error_('INVALID_REQUEST','Pilih jenis bayaran yang sah.');
+        receiptNote=TWYDomain.text(input.note,'Catatan bayaran',5,400);
+      }
+      var file=validateReceipt_(input),receiptKey='receipt:'+parentId+':'+input.idempotencyKey;
+      var previous=state.idempotency[receiptKey];
+      var submitted;
+      if(previous) {
+        submitted=TWYDomain.submitReceipt(state,parentId,{idempotencyKey:input.idempotencyKey,sha256:file.sha256,amountCents:input.amountCents},receiptCtx);
+        if(adminReceipt) {
+          var original=state.audit.find(function(a){return a.action==='ADMIN_RECEIPT_RECORDED'&&a.entityId===submitted.receiptId;});
+          if(!original||original.summary!==input.method+' - '+receiptNote)throw error_('IDEMPOTENCY_CONFLICT','Catatan atau jenis bayaran telah berubah.');
+        }
+      } else {
+        TWYDomain.amount(input.amountCents);
+        if(state.receipts.some(function(r){return r.sha256===file.sha256;}))throw error_('DUPLICATE_RECEIPT','Resit yang sama telah diterima.');
+        assertPrivateFolder_(required_('RECEIPT_FOLDER_ID'));
+        var reg=TWYDomain.registration(state,parentId);
+        var extension=file.mimeType==='application/pdf'?'.pdf':file.mimeType==='image/png'?'.png':'.jpg';
+        createdFile=DriveApp.getFolderById(required_('RECEIPT_FOLDER_ID')).createFile(Utilities.newBlob(file.bytes,file.mimeType,reg.reference+'-'+random_().slice(0,12)+extension));
+        submitted=TWYDomain.submitReceipt(state,parentId,{idempotencyKey:input.idempotencyKey,sha256:file.sha256,amountCents:input.amountCents,driveFileId:createdFile.getId(),mimeType:file.mimeType,sizeBytes:file.bytes.length},receiptCtx);
+        if(adminReceipt) {
+          var payment=state.payments.find(function(p){return p.receiptId===submitted.receiptId;});
+          var note=(input.method==='CASH'?'TUNAI - ':'PINDAHAN - ')+receiptNote;
+          if(input.method==='CASH')TWYDomain.reviewPayment(state,{paymentId:payment.id,status:'VERIFIED',verifiedAmountCents:input.amountCents,note:note},ctx);
+          else payment.reviewNote=note;
+          TWYDomain.audit(state,ctx,'ADMIN_RECEIPT_RECORDED',submitted.receiptId,input.method+' - '+receiptNote);
+        }
+        changed=true;
+      }
+      result=adminReceipt?{registration:TWYDomain.view(state,TWYDomain.registration(state,parentId))}:submitted;
+    }
     else if(action.indexOf('parent.')===0) {
       var parentId=authorizeParent_(state,request.sessionToken), parentCtx=context_('parent:'+parentId);
       if(action==='parent.pass'){var pass=TWYDomain.attendancePass(state,parentId);if(pass.available)pass.code=attendanceCode_(parentId);result={pass:pass};}
       else if(action==='parent.get') result={registration:TWYDomain.view(state,TWYDomain.registration(state,parentId))};
       else if(action==='parent.update') {result={registration:TWYDomain.update(state,parentId,input,parentCtx)};changed=true;}
-      else if(action==='parent.receipt') {
-        var file=validateReceipt_(input), receiptKey='receipt:'+parentId+':'+input.idempotencyKey;
-        var previous=state.idempotency[receiptKey];
-        if(previous) {
-          result=TWYDomain.submitReceipt(state,parentId,{idempotencyKey:input.idempotencyKey,sha256:file.sha256,amountCents:input.amountCents},parentCtx);
-        } else {
-          TWYDomain.amount(input.amountCents);
-          if(state.receipts.some(function(r){return r.sha256===file.sha256;})) throw error_('DUPLICATE_RECEIPT','Resit yang sama telah diterima.');
-          assertPrivateFolder_(required_('RECEIPT_FOLDER_ID'));
-          var reg=TWYDomain.registration(state,parentId);
-          var extension=file.mimeType==='application/pdf'?'.pdf':file.mimeType==='image/png'?'.png':'.jpg';
-          createdFile=DriveApp.getFolderById(required_('RECEIPT_FOLDER_ID')).createFile(Utilities.newBlob(file.bytes,file.mimeType,reg.reference+'-'+random_().slice(0,12)+extension));
-          result=TWYDomain.submitReceipt(state,parentId,{idempotencyKey:input.idempotencyKey,sha256:file.sha256,amountCents:input.amountCents,driveFileId:createdFile.getId(),mimeType:file.mimeType,sizeBytes:file.bytes.length},parentCtx);
-          changed=true;
-        }
-      } else throw error_('NOT_FOUND','Tindakan tidak dijumpai.',404);
+      else throw error_('NOT_FOUND','Tindakan tidak dijumpai.',404);
     }
     else if(action==='admin.inspectPass'||action==='admin.checkIn') {
       var code=String(input.code||'').trim(),target=state.registrations.find(function(r){return equal_(attendanceCode_(r.id),code);});

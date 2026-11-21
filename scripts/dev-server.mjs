@@ -8,7 +8,7 @@ const hash=v=>crypto.createHmac('sha256',secret).update(v).digest('hex');
 const students=['ADAM HAKIM — DATA UJIAN','AISYAH NUR — DATA UJIAN','AMELIA TAN — DATA UJIAN','ARJUN KUMAR — DATA UJIAN','DANISH HAZIQ — DATA UJIAN','NUR HANA — DATA UJIAN','SARAH LIM — DATA UJIAN','RAVI NAIR — DATA UJIAN'].map((name,i)=>({id:'demo-student-'+i,name,className:i<4?'6H':'6J',active:true}));
 let state=D.initial(students),chain=Promise.resolve(),files=new Map();
 if(process.env.TWY_PREVIEW_EVENT_TODAY==='1')state.settings.eventDate=new Date(Date.now()+8*3600000).toISOString().slice(0,10);
-Object.assign(state.settings,{registrationOpen:true,bankName:'PRATONTON — TIADA BAYARAN SEBENAR',accountHolder:'DATA UJIAN SAHAJA',accountNumber:'BUKAN-AKAUN-BANK'});
+Object.assign(state.settings,{registrationOpen:true,paymentDeadline:'2099-11-20',bankName:'PRATONTON — TIADA BAYARAN SEBENAR',accountHolder:'DATA UJIAN SAHAJA',accountNumber:'BUKAN-AKAUN-BANK'});
 const context=(actor='parent')=>({id:()=>crypto.randomUUID(),now:()=>new Date().toISOString(),actor});
 const json=(res,value,status=200)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(value));};
 function newSession(s,id){const token=crypto.randomBytes(32).toString('hex');s.sessions.push({registrationId:id,tokenHash:hash(token),authVersion:2,expiresAt:Date.now()+28800000});return token;}
@@ -24,6 +24,25 @@ async function action(name,input,token){const s=structuredClone(state),ctx=conte
   else if(name.startsWith('parent.')){const id=parent(s,token);if(name==='parent.pass'){const pass=D.attendancePass(s,id);if(pass.available)pass.code=passCode(id);result={pass};}else if(name==='parent.get')result={registration:D.view(s,D.registration(s,id))};else if(name==='parent.update'){result={registration:D.update(s,id,input,ctx)};changed=true;}else if(name==='parent.receipt'){const f=validatePreviewFile(input),fileId='preview-private-'+f.sha256;result=D.submitReceipt(s,id,{...input,...f,sizeBytes:f.bytes.length,driveFileId:fileId},ctx);files.set(fileId,{mimeType:f.mimeType,base64:input.base64,fileName:'resit-ujian'+(f.mimeType==='application/pdf'?'.pdf':f.mimeType==='image/png'?'.png':'.jpg')});changed=true;}else D.fail('NOT_FOUND','Tindakan tidak dijumpai.');}
   else if(name==='admin.inspectPass'||name==='admin.checkIn'){const r=s.registrations.find(r=>passCode(r.id)===input.code);if(!r)D.fail('INVALID_PASS','QR tidak sah.');if(name==='admin.inspectPass')result={pass:D.attendancePass(s,r.id),canCheckIn:new Date(Date.now()+8*3600000).toISOString().slice(0,10)===s.settings.eventDate};else{result=D.checkIn(s,r.id,ctx,input.personIds);changed=!result.alreadyUsed;}}
   else if(name==='admin.dashboard')result=D.dashboard(s);
+  else if(name==='admin.reviewPayment'&&input.recordReceipt===true){
+    if(!['CASH','TRANSFER'].includes(input.method))D.fail('INVALID_REQUEST','Jenis bayaran tidak sah.');
+    const note=D.text(input.note,'Catatan',5,400),file=validatePreviewFile(input);
+    const fileId='preview-private-'+file.sha256;
+    const submitted=D.submitReceipt(s,input.registrationId,{...input,...file,driveFileId:fileId,sizeBytes:file.bytes.length},ctx);
+    if(!submitted.replayed){
+      const payment=s.payments.find(p=>p.receiptId===submitted.receiptId);
+      const reviewNote=(input.method==='CASH'?'TUNAI - ':'PINDAHAN - ')+note;
+      if(input.method==='CASH')D.reviewPayment(s,{paymentId:payment.id,status:'VERIFIED',verifiedAmountCents:input.amountCents,note:reviewNote},ctx);
+      else payment.reviewNote=reviewNote;
+      D.audit(s,ctx,'ADMIN_RECEIPT_RECORDED',submitted.receiptId,input.method+' - '+note);
+      files.set(fileId,{mimeType:file.mimeType,base64:input.base64,fileName:'rekod-bayaran.pdf'});
+      changed=true;
+    }else{
+      const original=s.audit.find(a=>a.action==='ADMIN_RECEIPT_RECORDED'&&a.entityId===submitted.receiptId);
+      if(!original||original.summary!==input.method+' - '+note)D.fail('IDEMPOTENCY_CONFLICT','Catatan atau jenis bayaran telah berubah.');
+    }
+    result={registration:D.view(s,D.registration(s,input.registrationId))};
+  }
   else if(name==='admin.reviewPayment'){result={registration:D.reviewPayment(s,input,ctx)};changed=true;}
   else if(name==='admin.release'){result={registration:D.release(s,input.registrationId,input.reason,ctx)};changed=true;}
   else if(name==='admin.updateRegistration'){ctx.role='admin';result={registration:D.update(s,input.registrationId,input,ctx)};changed=true;}
