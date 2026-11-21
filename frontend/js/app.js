@@ -36,7 +36,7 @@ async function run(task, feedback = 'Sedang menyemak…') {
 const dateFormatter = new Intl.DateTimeFormat('ms-MY',{
   day:'numeric',month:'long',year:'numeric',timeZone:'Asia/Kuala_Lumpur'
 });
-function deadlineLabel(){return dateFormatter.format(new Date((official?.settings.paymentDeadline||'2026-11-20')+'T00:00:00+08:00'));}
+function deadlineLabel(){return dateFormatter.format(new Date((official?.settings.paymentDeadline||'2026-11-22')+'T00:00:00+08:00'));}
 
 let publicRequest;
 function refreshPublic({ afterWrite = false } = {}) {
@@ -46,7 +46,7 @@ function refreshPublic({ afterWrite = false } = {}) {
     if (publicRequest !== request) return result;
     official = result;
     $('#student-package-price').textContent = money(official.settings.studentFeeCents);
-    $('#payment-deadline').textContent = deadlineLabel() + '.';
+    $('#payment-deadline').textContent = deadlineLabel() + ', jam 11.59 malam.';
     const {quota:q} = official;
     $('#quota-label').textContent = official.settings.registrationOpen
       ? `${q.available} tempat ibu bapa masih tersedia` : 'Pendaftaran belum dibuka';
