@@ -61,7 +61,8 @@
 }
 
 /* The event landing keeps family access prominent after registration closes. */
-.event-readiness{margin:0 auto 18px;padding:18px 24px 20px;text-align:center;width:min(480px,100%);border-radius:24px;background:linear-gradient(145deg,#fffaf0fa,#fff7e6f5);box-shadow:0 8px 28px #1e2a5a12;color:var(--navy)}
+.event-readiness{position:relative;isolation:isolate;margin:0 auto 18px;padding:18px 24px 20px;text-align:center;width:min(480px,100%);color:var(--navy)}
+.event-readiness::before{content:"";position:absolute;inset:-38px -55px;z-index:-1;pointer-events:none;background:radial-gradient(ellipse closest-side,#fff8ec 0%,#fff8ecfa 56%,#fff8ecb8 75%,#fff8ec00 100%);filter:blur(9px)}
 .registration-closed{display:inline-block;margin:0 0 9px;padding:7px 16px;border:1px solid #c1a369;border-radius:30px;background:#fff7e6eb;font-size:11px;font-weight:750;letter-spacing:.03em}
 .event-countdown{font:600 25px/1.3 var(--display);margin:0 0 7px;text-wrap:balance}
 .event-access-copy{font-size:13px;line-height:1.6;max-width:43ch;margin:0 auto;text-wrap:balance}
