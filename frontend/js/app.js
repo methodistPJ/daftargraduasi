@@ -1,3 +1,4 @@
+import {eventPresentation} from './event-presentation.js';
 import {pending} from './pending.js';
 import {formatPhone,bindPhoneInputs} from './phone.js';
 import {api,config,money,escapeHTML as E,key,receiptPayload} from './api.js';
@@ -33,11 +34,21 @@ async function run(task, feedback = 'Sedang menyemak…') {
   }
 }
 
-const dateFormatter = new Intl.DateTimeFormat('ms-MY',{
-  day:'numeric',month:'long',year:'numeric',timeZone:'Asia/Kuala_Lumpur'
-});
-function deadlineLabel(){return dateFormatter.format(new Date((official?.settings.paymentDeadline||'2026-11-22')+'T00:00:00+08:00'));}
-
+const landingDefaults = {eventDate:'2026-12-02',paymentDeadline:'2026-11-22',registrationOpen:false};
+let accessIntent = 'profile';
+function updateLanding() {
+  const presentation = eventPresentation(official?.settings || landingDefaults);
+  $('#registration-status').textContent = presentation.closed ? 'Pendaftaran telah ditutup' : 'Pendaftaran dibuka';
+  $('#event-countdown').textContent = presentation.countdown;
+  $('#event-access-copy').textContent = presentation.description;
+  document.querySelectorAll('[data-access-label]').forEach(label => { label.textContent = presentation.label; });
+  document.querySelector('[data-action="access"] [data-access-label]').textContent = presentation.closed ? presentation.label : 'Daftar Kehadiran';
+  $('#preparation-note').textContent = presentation.qrMode
+    ? 'Simpan QR keluarga sebelum hadir. QR tersedia selepas bayaran penuh disahkan oleh Urus Setia.'
+    : 'Pendaftaran telah ditutup. Keluarga berdaftar masih boleh menyemak maklumat dan menghantar resit.';
+}
+updateLanding();
+setInterval(updateLanding, 60000);
 let publicRequest;
 function refreshPublic({ afterWrite = false } = {}) {
   if (afterWrite) publicRequest = null;
@@ -46,14 +57,7 @@ function refreshPublic({ afterWrite = false } = {}) {
     if (publicRequest !== request) return result;
     official = result;
     $('#student-package-price').textContent = money(official.settings.studentFeeCents);
-    $('#payment-deadline').textContent = deadlineLabel() + ', jam 11.59 malam.';
-    const {quota:q} = official;
-    $('#quota-label').textContent = official.settings.registrationOpen
-      ? `${q.available} tempat ibu bapa masih tersedia` : 'Pendaftaran belum dibuka';
-    $('#quota-confirmed').style.width = (q.confirmed / q.capacity * 100) + '%';
-    $('#quota-reserved').style.width = (q.reserved / q.capacity * 100) + '%';
-    $('.quota-track').setAttribute('aria-label', `${q.confirmed} disahkan, ${q.reserved} tempahan sementara, ${q.available} tersedia daripada ${q.capacity}`);
-    $('.quota-legend').hidden = false;
+    updateLanding();
     return result;
   }).finally(() => {
     if (publicRequest === request) publicRequest = null;
@@ -61,9 +65,24 @@ function refreshPublic({ afterWrite = false } = {}) {
   publicRequest = request;
   return request;
 }
-refreshPublic().catch(()=>{if(!official){$('#quota-label').textContent='Pendaftaran sedang disediakan';$('.quota-legend').hidden=true;}});
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshPublic().catch(()=>{});});
-document.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click',()=>{const a=b.dataset.action;if(a==='register')startRegistration();if(a==='return')showLogin();if(a==='guide')showGuide(false);if(a==='privacy')showPrivacy();}));
+refreshPublic().catch(() => {});
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden){updateLanding();refreshPublic().catch(()=>{});}
+});
+document.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', () => {
+  const action = button.dataset.action;
+  if (action === 'access' && !eventPresentation(official?.settings || landingDefaults).closed) {
+    accessIntent = 'profile';
+    startRegistration();
+    return;
+  }
+  if (action === 'access' || action === 'return') {
+    accessIntent = eventPresentation(official?.settings || landingDefaults).qrMode ? 'pass' : 'profile';
+    showLogin();
+  }
+  if (action === 'guide') showGuide(false);
+  if (action === 'privacy') showPrivacy();
+}));
 function startRegistration() {
   draft = {student:null,contactPhone:'',guardians:[],attending:false,idempotencyKey:key(),receiptKey:key(),updateKey:key(),saved:false};
   sessionToken = '';
@@ -230,12 +249,17 @@ async function showLogin(){
 function showPhoneVerification(){
   showDialog(panel('Sahkan nombor telefon.','Masukkan nombor telefon utama yang digunakan semasa mendaftar untuk membuka rekod anak.',`${selectedStudent()}<form id="verify-phone-form"><label class="field"><span>Nombor telefon yang didaftarkan</span><input id="verify-phone" type="tel" autocomplete="tel" placeholder="0189044630" required><small>Nombor sahaja, tanpa ruang atau sengkang. Format akan dikemaskan secara automatik.</small></label><div class="flow-actions"><button type="button" class="button button-plain" id="phone-back">CARI NAMA LAIN</button><button type="submit" class="button button-navy">BUKA PENDAFTARAN</button></div></form>`));
   $('#phone-back').onclick=()=>showStudent(true);
-  $('#verify-phone-form').onsubmit=e=>{e.preventDefault();run(async()=>{const contactPhone=formatPhone($('#verify-phone').value);if(!/^0[1-9]\d{7,9}$/.test(contactPhone))throw new Error('Masukkan nombor telefon yang sah, contohnya 0189044630.');const result=await api('auth.login',{studentId:draft.student.id,contactPhone});sessionToken=result.sessionToken;currentRegistration=result.registration;if(!official)await refreshPublic();showProfile();}, 'Sedang menyemak nombor telefon…');};
+  $('#verify-phone-form').onsubmit=e=>{e.preventDefault();run(async()=>{const contactPhone=formatPhone($('#verify-phone').value);if(!/^0[1-9]\d{7,9}$/.test(contactPhone))throw new Error('Masukkan nombor telefon yang sah, contohnya 0189044630.');const result=await api('auth.login',{studentId:draft.student.id,contactPhone});sessionToken=result.sessionToken;currentRegistration=result.registration;if(!official)await refreshPublic();showProfile();if(accessIntent==='pass'&&currentRegistration.passEligible)await showPass();}, 'Sedang menyemak nombor telefon…');};
 }
 function showNotRegistered(){
-  showDialog(panel('Anak anda belum berdaftar.','Nama telah dijumpai dalam senarai murid, tetapi pendaftaran graduasi belum dibuat.',`${selectedStudent()}<div class="flow-actions"><button class="button button-plain" id="search-again">CARI NAMA LAIN</button><button class="button button-navy" id="register-selected">DAFTAR SEKARANG</button></div>`));
+  const closed = eventPresentation(official?.settings || landingDefaults).closed;
+  showDialog(panel('Anak anda belum berdaftar.',closed ? 'Pendaftaran graduasi telah ditutup. Hubungi Urus Setia untuk bantuan.' : 'Nama telah dijumpai dalam senarai murid, tetapi pendaftaran graduasi belum dibuat.',`${selectedStudent()}<div class="flow-actions"><button class="button button-plain" id="search-again">CARI NAMA LAIN</button>${closed ? '<a class="button button-navy" href="https://t.me/muhaiminrahim" target="_blank" rel="noopener">HUBUNGI URUS SETIA</a>' : '<button class="button button-navy" id="register-selected">DAFTAR SEKARANG</button>'}</div>`));
   $('#search-again').onclick=()=>showStudent(true);
-  $('#register-selected').onclick=()=>run(async()=>{await refreshPublic();if(!official.settings.registrationOpen)throw new Error('Pendaftaran belum dibuka. Nantikan makluman rasmi pihak sekolah.');showGuardians(false);});
+  $('#register-selected')?.addEventListener('click',()=>run(async()=>{
+    await refreshPublic();
+    if(!official.settings.registrationOpen)throw new Error('Pendaftaran telah ditutup. Sila hubungi Urus Setia.');
+    showGuardians(false);
+  }));
 }
 function history(r){return `<section class="payment-history"><h3>Sejarah bayaran</h3>${r.payments.length?r.payments.map(p=>`<div class="history-row"><span>${money(p.amountCents)}<br><small>${new Date(p.createdAt).toLocaleDateString('ms-MY')}</small></span><span class="status-pill ${p.status.toLowerCase()}">${labels[p.status]||E(p.status)}</span></div>${p.reviewNote?`<p class="quiet-note">Catatan urus setia: ${E(p.reviewNote)}</p>`:''}`).join(''):'<p class="quiet-note">Belum ada resit diterima.</p>'}</section>`;}
 function paymentConfirmation(r) {

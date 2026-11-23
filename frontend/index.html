@@ -2,7 +2,7 @@
 <html lang="ms">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#1E2A5A"><meta name="description" content="Raikan graduasi Tahun 6 SK Methodist Petaling Jaya. 2 Disember 2026, D’Buana Hall. Pendaftaran murid dan ibu bapa, bayaran dan panduan pakaian.">
+  <meta name="theme-color" content="#1E2A5A"><meta name="description" content="Raikan graduasi Tahun 6 SK Methodist Petaling Jaya. 2 Disember 2026, D’Buana Hall. Pendaftaran telah ditutup. Semak maklumat keluarga, bayaran, QR kehadiran dan panduan pakaian.">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://accounts.google.com; style-src 'self' https://accounts.google.com; img-src 'self' blob: data: https://*.googleusercontent.com; font-src 'self'; connect-src 'self' https://*.workers.dev https://accounts.google.com; frame-src https://accounts.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
   <title>The Wonder Years 2026 · SK Methodist Petaling Jaya</title>
   <link rel="icon" href="assets/logo-secondary.webp"><link rel="preload" href="assets/Montserrat.ttf" as="font" type="font/ttf" crossorigin>
@@ -12,7 +12,7 @@
 <meta property="og:locale" content="ms_MY">
 <meta property="og:site_name" content="The Wonder Years 2026">
 <meta property="og:title" content="The Wonder Years 2026 | Graduasi Tahun 6 SK Methodist Petaling Jaya">
-<meta property="og:description" content="Raikan graduasi Tahun 6 pada 2 Disember 2026, 2.30 petang di D’Buana Hall, Petaling Jaya. Daftar murid dan ibu bapa sekarang.">
+<meta property="og:description" content="Raikan graduasi Tahun 6 pada 2 Disember 2026, 2.30 petang di D’Buana Hall, Petaling Jaya. Semak pendaftaran, bayaran dan QR kehadiran keluarga.">
 <meta property="og:url" content="https://methodistpj.github.io/daftargraduasi/">
 <meta property="og:image" content="https://methodistpj.github.io/daftargraduasi/assets/twy2026-social-preview-v1.jpg">
 <meta property="og:image:secure_url" content="https://methodistpj.github.io/daftargraduasi/assets/twy2026-social-preview-v1.jpg">
@@ -22,7 +22,7 @@
 <meta property="og:image:alt" content="The Wonder Years 2026, ilustrasi sekolah dan murid berjubah ungu. 2 Disember 2026, D’Buana Hall, Petaling Jaya.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="The Wonder Years 2026 | Graduasi Tahun 6 SK Methodist Petaling Jaya">
-<meta name="twitter:description" content="Raikan graduasi Tahun 6 pada 2 Disember 2026, 2.30 petang di D’Buana Hall, Petaling Jaya. Daftar murid dan ibu bapa sekarang.">
+<meta name="twitter:description" content="Raikan graduasi Tahun 6 pada 2 Disember 2026, 2.30 petang di D’Buana Hall, Petaling Jaya. Semak pendaftaran, bayaran dan QR kehadiran keluarga.">
 <meta name="twitter:image" content="https://methodistpj.github.io/daftargraduasi/assets/twy2026-social-preview-v1.jpg">
 </head>
 <body>
@@ -30,7 +30,7 @@
   <div id="preview-banner" class="preview-banner" hidden>PRATONTON · Data ujian sahaja. Tiada pendaftaran atau bayaran sebenar.</div>
   <header class="site-header">
     <a class="school-wordmark" href="#main">SK METHODIST<br><span>PETALING JAYA</span></a>
-    <nav aria-label="Navigasi utama"><a href="#pakej">Pakej majlis</a><button class="text-button" data-action="guide">Panduan pakaian</button><button class="nav-return" data-action="return">Semak / Kemaskini <span aria-hidden="true">↗</span></button></nav>
+    <nav aria-label="Navigasi utama"><a href="#persediaan">Persediaan majlis</a><button class="text-button" data-action="guide">Panduan pakaian</button><button class="nav-return" data-action="return"><span data-access-label>Semak / Kemaskini</span> <span aria-hidden="true">↗</span></button></nav>
   </header>
   <main id="main">
     <section class="hero" aria-label="The Wonder Years 2026">
@@ -43,26 +43,40 @@
         <p class="hero-tagline">Six Years of Memories,<br class="mobile-break"> <em>A Lifetime of Wonder.</em></p>
         <div class="event-line"><span>2 Disember 2026</span><span aria-hidden="true">·</span><span>2.30 petang</span></div>
         <p class="hero-venue">D’Buana Hall, Petaling Jaya</p>
-        <div class="quota" aria-live="polite"><p id="quota-label">Menyemak tempat ibu bapa…</p><div class="quota-track" role="img" aria-label="Ketersediaan tempat ibu bapa"><span id="quota-confirmed"></span><span id="quota-reserved"></span></div><p class="quota-legend"><span>Disahkan</span><span>Tempahan sementara</span></p></div>
-        <button class="button button-gold hero-cta" data-action="register">DAFTAR KEHADIRAN <span aria-hidden="true">↗</span></button>
-        <button class="hero-secondary" data-action="return">SEMAK / KEMASKINI</button>
+        <div class="event-readiness">
+          <p class="registration-closed" id="registration-status">Pendaftaran telah ditutup</p>
+          <p class="event-countdown" id="event-countdown">Jumpa di hari graduasi.</p>
+          <p class="event-access-copy" id="event-access-copy">Semak maklumat keluarga, status bayaran dan resit sebelum majlis.</p>
+        </div>
+        <button class="button button-gold hero-cta" data-action="access"><span data-access-label>Semak / Kemaskini</span> <span aria-hidden="true">↗</span></button>
+        <button class="hero-secondary" data-action="guide">PANDUAN PAKAIAN MAJLIS</button>
       </div>
-      <a class="scroll-cue" href="#pakej">Kenangan yang menanti <span aria-hidden="true">↓</span></a>
+      <a class="scroll-cue" href="#persediaan">Bersedia untuk hari istimewa <span aria-hidden="true">↓</span></a>
+    </section>
+    <section id="persediaan" class="event-preparation section-wrap">
+      <p class="eyebrow">COUNTING DOWN TO OUR BIG DAY</p>
+      <h2>Sikit lagi,<br><em>hari mereka.</em></h2>
+      <div class="preparation-grid">
+        <article><h3>Semak maklumat keluarga</h3><p>Pastikan nama waris dan nombor telefon betul. Muat naik resit yang belum dihantar melalui Semak / Kemaskini.</p></article>
+        <article><h3>Sediakan pakaian</h3><p>Rujuk panduan pakaian murid dan ibu bapa untuk keselesaan sepanjang majlis.</p><button class="text-link" data-action="guide">Lihat panduan pakaian</button></article>
+        <article><h3>Simpan QR kehadiran</h3><p>QR tersedia selepas bayaran penuh disahkan. Satu QR untuk murid dan waris dalam pendaftaran yang sama. Tunjukkan kepada Urus Setia di pintu masuk.</p></article>
+      </div>
+      <p class="event-help">Perlukan bantuan? <a href="https://t.me/muhaiminrahim" target="_blank" rel="noopener">Hubungi Urus Setia di Telegram</a>.</p>
     </section>
     <section id="pakej" class="packages section-wrap">
       <p class="eyebrow">ONE BEAUTIFUL AFTERNOON</p><h2>Hari mereka.<br><em>Kenangan kita.</em></h2>
       <p class="section-intro">Enam tahun membesar bersama. Kini, kita raikan satu lagi langkah istimewa anak-anak Tahun 6—ditemani keluarga, sahabat dan kenangan sekolah.</p>
       <div class="package-columns">
         <article class="package-student"><span class="tiny-star" aria-hidden="true">✦</span><h3>Pakej Murid</h3><p class="package-caption">Sumbangan penyertaan</p><p class="package-price"><span id="student-package-price">RM120</span> <small>bagi setiap graduan</small></p><p class="package-caption">Lengkap untuk hari penuh kenangan.</p><ul><li>Foto pentas & cetakan saiz 8RW</li><li>Sewa jubah dan mortarboard</li><li>Mini bouquet</li><li>Cenderahati</li><li>Jamuan makan</li></ul></article>
-        <article class="package-parent"><span class="tiny-star" aria-hidden="true">✦</span><h3>Pakej Ibu Bapa</h3><p class="package-price">RM30 <small>seorang</small></p><p class="package-caption">Bersama keluarga, lebih bermakna.</p><ul><li>Jamuan makan untuk setiap waris</li><li>Kuota awal: 100 tempat ibu bapa</li><li>Tempat disimpan sementara selepas pendaftaran</li><li>Pengesahan akhir selepas bayaran disemak</li></ul><p class="quiet-note">Murid tidak menggunakan kuota tempat ibu bapa.</p></article>
+        <article class="package-parent"><span class="tiny-star" aria-hidden="true">✦</span><h3>Pakej Ibu Bapa</h3><p class="package-price">RM30 <small>seorang</small></p><p class="package-caption">Bersama keluarga, lebih bermakna.</p><ul><li>Jamuan makan untuk setiap waris</li><li>Bilangan waris mengikut rekod pendaftaran keluarga</li><li>Pengesahan akhir selepas bayaran disemak</li></ul><p class="quiet-note">Murid tidak menggunakan kuota tempat ibu bapa.</p></article>
       </div>
-      <div class="deadline-note"><span class="eyebrow">SEBELUM HARI ISTIMEWA ITU</span><p>Lengkapkan bayaran selewat-lewatnya <strong id="payment-deadline">22 November 2026, jam 11.59 malam.</strong></p><button class="text-link" data-action="register">Mulakan pendaftaran <span aria-hidden="true">→</span></button></div>
+      <div class="deadline-note"><span class="eyebrow">SEBELUM KITA BERJUMPA</span><p id="preparation-note">Pendaftaran telah ditutup. Keluarga berdaftar masih boleh menyemak maklumat dan menghantar resit.</p><button class="text-link" data-action="return"><span data-access-label>Semak / Kemaskini</span> <span aria-hidden="true">→</span></button></div>
     </section>
     <section class="dress-teaser">
       <div class="dress-teaser-copy"><p class="eyebrow">DRESSED FOR OUR BIG DAY</p><h2>Kemas, selesa.<br><em>Sedia diraikan.</em></h2><p>Smart casual atau pakaian tradisional yang sesuai. Untuk murid, pilih pakaian yang selesa dipakai di bawah jubah ungu. Untuk ibu bapa, blazer ialah pilihan tambahan.</p><button class="button button-navy" data-action="guide">PANDUAN PAKAIAN MAJLIS <span aria-hidden="true">↗</span></button></div>
       <img src="assets/dresscode-students.webp" alt="Contoh murid dengan pakaian smart casual dan tradisional, termasuk pakaian di bawah jubah graduasi ungu" loading="lazy" width="1536" height="1024">
     </section>
-    <section class="closing"><img src="assets/logo-secondary.webp" alt="The Wonder Years Class of 2026" loading="lazy" width="300" height="327"><h2>A little goodbye.<br><em>A wonderful beginning.</em></h2><p>2 Disember 2026 · D’Buana Hall, Petaling Jaya</p><button class="button button-gold" data-action="register">RAIKAN BERSAMA KAMI</button></section>
+    <section class="closing"><img src="assets/logo-secondary.webp" alt="The Wonder Years Class of 2026" loading="lazy" width="300" height="327"><h2>A little goodbye.<br><em>A wonderful beginning.</em></h2><p>2 Disember 2026 · D’Buana Hall, Petaling Jaya</p><button class="button button-gold" data-action="return"><span data-access-label>Semak / Kemaskini</span></button></section>
   </main>
   <footer class="site-footer"><span>SK Methodist Petaling Jaya · Graduasi 2026</span><button data-action="privacy" class="text-button">Privasi pendaftaran</button><a href="privacy.html">Maklumat privasi</a><a href="admin.html">Urus setia</a></footer>
   <dialog id="flow-dialog" class="flow-dialog" aria-labelledby="flow-title"><button id="close-flow" class="dialog-close" aria-label="Tutup">×</button><div id="flow-content"></div><p id="flow-status" class="pending-status" role="status"></p></dialog>

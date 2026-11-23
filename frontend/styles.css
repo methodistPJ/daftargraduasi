@@ -59,3 +59,22 @@
 .payment-confirmation .button {
   margin-top: 15px;
 }
+
+/* The event landing keeps family access prominent after registration closes. */
+.event-readiness{margin:0 auto 18px;text-align:center;max-width:440px}
+.registration-closed{display:inline-block;margin:0 0 9px;padding:7px 16px;border:1px solid #c1a369;border-radius:30px;background:#fff7e6eb;font-size:11px;font-weight:750;letter-spacing:.03em}
+.event-countdown{font:600 25px/1.3 var(--display);margin:0 0 7px;text-wrap:balance}
+.event-access-copy{font-size:12px;line-height:1.6;max-width:43ch;margin:0 auto;text-wrap:balance}
+.button [data-access-label]{font:inherit;line-height:1.5;letter-spacing:inherit}
+.nav-return [data-access-label]{display:inline;margin-left:0}
+.event-preparation{background:radial-gradient(ellipse at 8% 10%,#f4dbe799,transparent 55%),radial-gradient(ellipse at 95% 90%,#ddd5f080,transparent 50%),var(--cream)}
+.event-preparation h2{font:500 clamp(40px,5vw,64px)/1.12 var(--display);margin:0 0 38px}
+.preparation-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:38px;counter-reset:preparation}
+.preparation-grid article{counter-increment:preparation;border-top:1px solid #baa365;padding-top:18px}
+.preparation-grid article::before{content:'0' counter(preparation);display:block;color:#9e7f30;font:500 28px var(--display);margin-bottom:16px}
+.preparation-grid h3{font:600 23px/1.3 var(--display);margin:0 0 12px}
+.preparation-grid p,.event-help{font-size:13px;line-height:1.8}
+.preparation-grid .text-link{font-size:11px}
+.event-help{margin:30px 0 0}
+@media(max-height:900px) and (min-width:800px){.hero{min-height:860px}}
+@media(max-width:600px){.hero{min-height:920px}.registration-closed{font-size:10px}.event-countdown{font-size:23px}.event-access-copy{font-size:11px}.event-readiness{max-width:330px;margin-bottom:16px}.preparation-grid{grid-template-columns:1fr;gap:28px}.event-preparation h2{margin-bottom:28px}.preparation-grid h3{font-size:23px}.preparation-grid article::before{margin-bottom:10px}.nav-return [data-access-label]{display:inline}}
