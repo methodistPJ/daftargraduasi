@@ -79,3 +79,9 @@
 .event-help{margin:30px 0 0}
 @media(max-height:900px) and (min-width:800px){.hero{min-height:860px}}
 @media(max-width:600px){.hero{min-height:920px}.registration-closed{font-size:10px}.event-countdown{font-size:23px}.event-access-copy{font-size:12px}.event-readiness{max-width:330px;margin-bottom:16px;padding:16px 18px 18px}.preparation-grid{grid-template-columns:1fr;gap:28px}.event-preparation h2{margin-bottom:28px}.preparation-grid h3{font-size:23px}.preparation-grid article::before{margin-bottom:10px}.nav-return [data-access-label]{display:inline}}
+
+/* Meal question stays prominent while blending with the existing palette. */
+.diet-panel{margin:1.5rem 0 2rem;padding:1.25rem;border-radius:1.1rem;background:linear-gradient(135deg,#eee9fa 0%,#eef5fa 65%,#fff9ec 100%);color:var(--navy,#1e2a5a)}
+.diet-panel h3{font-size:1.35rem;line-height:1.35;margin:.35rem 0 .8rem}.diet-panel p{line-height:1.6}.diet-panel fieldset{border:0;padding:0;margin:1rem 0 0;min-width:0}.diet-choices{display:grid;gap:.7rem;margin-bottom:1rem}.diet-choices label,.diet-person{display:flex;align-items:flex-start;gap:.65rem;padding:.7rem 0;cursor:pointer}.diet-panel input[type=radio],.diet-panel input[type=checkbox]{width:1.2rem;height:1.2rem;min-width:1.2rem;margin:.2rem 0 0;accent-color:#1e2a5a}.diet-person span{min-width:0;overflow-wrap:anywhere}.diet-person small{display:block;font-size:.85rem;margin-top:.2rem}.diet-status{font-weight:700}.diet-panel .button{width:100%;margin-top:.8rem;font-size:.9rem}.diet-panel [hidden]{display:none!important}
+
+.diet-panel .quiet-note{font-size:.9rem;line-height:1.6}

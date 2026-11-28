@@ -8,6 +8,7 @@ if(apiBase&&!/^https:\/\/[a-z0-9.-]+\.workers\.dev\/api$/.test(apiBase))throw ne
 await fs.writeFile(path.join(root,'dist/config.js'),'window.TWY_CONFIG = '+JSON.stringify({apiBase,googleClientId,preview:false})+';\n');
 await fs.writeFile(path.join(root,'dist/.nojekyll'),'');
 await fs.copyFile(path.join(root,'backend/domain.js'),path.join(root,'backend/apps-script/Domain.gs'));
+await fs.copyFile(path.join(root,'backend/diet.js'),path.join(root,'backend/apps-script/Diet.gs'));
 console.log('Built static frontend and Apps Script shared domain. No roster or secrets included.');
 
 // Version entry assets and their module imports so browser caches cannot hide a deployment.

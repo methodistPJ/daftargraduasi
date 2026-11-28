@@ -4,7 +4,7 @@ const signed=b=>[...b].map(x=>x>127?x-256:x),secret='test-secret-for-isolated-ad
 function harness(){
   const cache=new Map(),props={GATEWAY_SECRET:secret,ADMIN_EMAILS:'admin@example.test',APP_SPREADSHEET_ID:'test-database',SOURCE_SPREADSHEET_ID:'test-roster',DATABASE_FOLDER_ID:'private-database-folder'},lock={held:false,acquired:0,released:0,tryLock(){this.held=true;this.acquired++;return true;},waitLock(){this.held=true;},hasLock(){return this.held;},releaseLock(){this.held=false;this.released++;}};
   const ctx={console,Date,JSON,Math,Number,String,Object,Array,RegExp,Error,Set,encodeURIComponent,
-    PropertiesService:{getScriptProperties:()=>({getProperty:k=>props[k]||null,setProperty:(k,v)=>props[k]=v})},
+    PropertiesService:{getScriptProperties:()=>({getProperty:k=>props[k]||null,setProperty:(k,v)=>props[k]=v,getProperties:()=>({...props})})},
     CacheService:{getScriptCache:()=>({get:k=>cache.get(k)||null,put:(k,v)=>cache.set(k,v),remove:k=>cache.delete(k)})},LockService:{getScriptLock:()=>lock},
     Utilities:{getUuid:()=>crypto.randomUUID(),Charset:{UTF_8:'utf8'},DigestAlgorithm:{SHA_256:'sha256'},
       computeDigest:(alg,v)=>signed(crypto.createHash(alg).update(typeof v==='string'?v:Buffer.from(v.map(x=>(x+256)%256))).digest()),
@@ -12,7 +12,7 @@ function harness(){
       base64Decode:v=>signed(Buffer.from(v,'base64')),base64Encode:v=>Buffer.from(v.map(x=>(x+256)%256)).toString('base64'),
       newBlob:v=>({getDataAsString:()=>Buffer.from(v.map(x=>(x+256)%256)).toString('latin1')})},
     ContentService:{MimeType:{JSON:'application/json'},createTextOutput:text=>({text,setMimeType(){return this;}})} };
-  vm.createContext(ctx);vm.runInContext(domain,ctx);vm.runInContext(adapter,ctx);
+  vm.createContext(ctx);vm.runInContext(domain,ctx);vm.runInContext(fs.readFileSync(new URL('../backend/diet.js',import.meta.url),'utf8'),ctx);vm.runInContext(adapter,ctx);
   let state=ctx.TWYDomain.initial([{id:'test-student',name:'MURID DUMMY',className:'6H',active:true}]);state.settings.registrationOpen=true;state.settings.paymentDeadline='2099-11-20';
   const originalCommit=ctx.commitState_;
   ctx.loadState_=()=>structuredClone(state);ctx.loadStateFresh_=()=>structuredClone(state);ctx.commitState_=s=>{state=structuredClone(s);};
@@ -112,4 +112,32 @@ test('cash input rejects missing note, invalid amount and reused receipt before 
     assert.equal(f.h.call('admin.reviewPayment',{...f.input,...change},{role:'admin',email:'admin@example.test'}).ok,false);
     assert.equal(f.created,0);
   }
+});
+
+test('meal endpoints require matching parent session or verified organizer and do not expose script properties',()=>{
+  const h=harness(),r=h.call('public.register',registration).data;
+  const snapshot=structuredClone(h.state);
+  assert.equal(h.call('parent.get',{section:'mealPreferences'}).error.code,'UNAUTHORIZED');
+  assert.equal(h.call('admin.dashboard',{section:'mealPreferences'}).error.code,'UNAUTHORIZED');
+  const read=h.call('parent.get',{section:'mealPreferences'},undefined,r.sessionToken);
+  assert.equal(read.ok,true);assert.equal(read.data.diet.answered,false);
+  assert.equal(read.data.diet.people.length,2);
+  const summary=h.call('admin.dashboard',{section:'mealPreferences'}, {role:'admin',email:'admin@example.test'});
+  assert.equal(summary.ok,true);assert.equal(summary.data.unansweredFamilies,1);
+  assert.ok(!JSON.stringify(summary).includes(secret));
+  assert.deepEqual(h.state,snapshot);
+});
+test('saving a meal preference writes only its namespace and leaves complete canonical state unchanged',()=>{
+  const h=harness(),r=h.call('public.register',registration).data,snapshot=structuredClone(h.state);
+  const originalSave=h.ctx.TWYDiet.save;
+  h.ctx.TWYDiet.save=(s,id,input)=>originalSave(s,id,input,Date.parse('2026-11-28T06:00:00Z'));
+  const ids=h.call('parent.get',{section:'mealPreferences'},undefined,r.sessionToken).data.diet.people.map(p=>p.id);
+  const saved=h.call('parent.update',{section:'mealPreferences',choice:'VEGETARIAN',personIds:ids},undefined,r.sessionToken);
+  assert.equal(saved.ok,true);assert.equal(saved.data.diet.vegetarianCount,2);
+  assert.deepEqual(h.state,snapshot);
+  assert.ok(h.props['DIET_RESPONSE_V1_'+r.registration.id]);
+  const again=h.call('parent.update',{section:'mealPreferences',choice:'NONE',personIds:[]},undefined,r.sessionToken);
+  assert.equal(again.data.diet.vegetarianCount,0);
+  assert.equal(h.call('admin.dashboard',{section:'mealPreferences'}, {role:'admin',email:'admin@example.test'}).data.vegetarianCount,0);
+  assert.deepEqual(h.state,snapshot);
 });

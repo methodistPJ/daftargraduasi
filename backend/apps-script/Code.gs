@@ -118,6 +118,8 @@ function doPost(e) {
     else if(action.indexOf('parent.')===0) {
       var parentId=authorizeParent_(state,request.sessionToken), parentCtx=context_('parent:'+parentId);
       if(action==='parent.pass'){var pass=TWYDomain.attendancePass(state,parentId);if(pass.available)pass.code=attendanceCode_(parentId);result={pass:pass};}
+      else if(action==='parent.get'&&input.section==='mealPreferences') result={diet:TWYDiet.view(state,parentId,dietResponse_(parentId))};
+      else if(action==='parent.update'&&input.section==='mealPreferences') {var savedDiet=TWYDiet.save(state,parentId,input);properties_().setProperty('DIET_RESPONSE_V1_'+parentId,JSON.stringify(savedDiet));result={diet:TWYDiet.view(state,parentId,savedDiet)};}
       else if(action==='parent.get') result={registration:TWYDomain.view(state,TWYDomain.registration(state,parentId))};
       else if(action==='parent.update') {result={registration:TWYDomain.update(state,parentId,input,parentCtx)};changed=true;}
       else throw error_('NOT_FOUND','Tindakan tidak dijumpai.',404);
@@ -128,6 +130,7 @@ function doPost(e) {
       if(action==='admin.inspectPass'){result={pass:TWYDomain.attendancePass(state,target.id),canCheckIn:new Date(Date.now()+8*3600000).toISOString().slice(0,10)===state.settings.eventDate};}
       else {result=TWYDomain.checkIn(state,target.id,ctx,input.personIds);changed=!result.alreadyUsed;}
     }
+    else if(action==='admin.dashboard'&&input.section==='mealPreferences') result=TWYDiet.summary(state,dietResponses_(state));
     else if(action==='admin.dashboard') result=TWYDomain.dashboard(state);
     else if(action==='admin.reviewPayment') {result={registration:TWYDomain.reviewPayment(state,input,ctx)};changed=true;}
     else if(action==='admin.release') {result={registration:TWYDomain.release(state,input.registrationId,input.reason,ctx)};changed=true;}
@@ -312,3 +315,14 @@ function backup_(state) {
   return {fileId:file.getId(),createdAt:new Date().toISOString()};
 }
 function backupPortal() { var lock=LockService.getScriptLock();lock.waitLock(30000);try{return backup_(loadState_());}finally{lock.releaseLock();} }
+
+// Namespaced meal responses never change canonical application state or table schemas.
+function dietResponse_(registrationId) {
+  var value=properties_().getProperty('DIET_RESPONSE_V1_'+registrationId);
+  return value?JSON.parse(value):null;
+}
+function dietResponses_(state) {
+  var all=properties_().getProperties(),responses={};
+  state.registrations.forEach(function(r){var value=all['DIET_RESPONSE_V1_'+r.id];if(value)responses[r.id]=JSON.parse(value);});
+  return responses;
+}

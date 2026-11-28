@@ -215,6 +215,7 @@ function showGuardians(editing){
   $('#guardians-back').onclick=()=>{readGuardians();editing?showProfile():showStudent();};
   $('#guardians-next').onclick=()=>run(async()=>{readGuardians();validateContacts();draft.reserveSeats=!!$('#reserve-again')?.checked;await refreshPublic();showSummary(editing);});
 }
+function deadlineLabel(){return new Date((official?.settings.paymentDeadline||landingDefaults.paymentDeadline)+'T00:00:00+08:00').toLocaleDateString('ms-MY',{day:'numeric',month:'long',year:'numeric',timeZone:'Asia/Kuala_Lumpur'});}
 function feeList(editing){const n=draft.guardians.length,total=official.settings.studentFeeCents+n*official.settings.guardianFeeCents,verified=editing?currentRegistration.verifiedCents:0;return `<ul class="summary-list"><li><span>Sumbangan penyertaan murid</span><strong>${money(official.settings.studentFeeCents)}</strong></li><li><span>Waris: ${n} × ${money(official.settings.guardianFeeCents)}</span><strong>${money(n*official.settings.guardianFeeCents)}</strong></li><li class="total"><span>Jumlah</span><strong>${money(total)}</strong></li>${editing?`<li><span>Bayaran telah disahkan</span><strong>${money(verified)}</strong></li><li><span>Baki perlu dibayar</span><strong>${money(Math.max(0,total-verified))}</strong></li>`:''}</ul>`;}
 function bankDetails(){const s=official.settings;return s.bankName&&s.accountHolder&&s.accountNumber?`<div class="bank-block"><p class="eyebrow">MAKLUMAT AKAUN PIBG</p><p class="bank-help">Belum membuat bayaran? Gunakan akaun di bawah, kemudian muat naik resit pada ruangan selepas ini.</p><p>${E(s.bankName)}</p><p>${E(s.accountHolder)}</p><p><strong>${E(s.accountNumber)}</strong> <button type="button" class="copy-button" data-copy="${E(s.accountNumber)}">Salin nombor akaun</button></p><p>Rujukan transaksi wajib:<br><strong>${E(s.bankReference)}</strong> <button type="button" class="copy-button" data-copy="${E(s.bankReference)}">Salin rujukan</button></p>${s.bankQrAsset&&/^assets\/[a-zA-Z0-9/_\-.]+$/.test(s.bankQrAsset)?`<img src="${E(s.bankQrAsset)}" alt="QR bayaran rasmi PIBG" width="200">`:''}</div>`:'<p class="info-note">Maklumat bank rasmi belum tersedia. Jangan membuat bayaran ke akaun lain.</p>';}
 function bindCopies(){content.querySelectorAll('[data-copy]').forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(b.dataset.copy);toast('Berjaya disalin.');}catch{message('Sila salin maklumat secara manual.');}});}
@@ -278,11 +279,53 @@ function paymentConfirmation(r) {
 }
 function showProfile(){
   const r=currentRegistration;success=null;
-  showDialog(panel('Pendaftaran anda.','Semak bayaran, kemas kini waris atau muat naik resit di sini.',`<div class="return-heading"><h3>${E(r.student.name)}</h3><span class="class-badge">Kelas ${E(r.student.className)}</span></div>${paymentConfirmation(r)}${!r.seatsHeld&&r.guardians.length?'<p class="form-message">Tempahan waris telah dilepaskan oleh urus setia. Tempahan semula tertakluk kepada baki kuota.</p>':''}<ul class="summary-list"><li><span>Waris</span><strong>${r.guardians.length} orang</strong></li><li><span>Jumlah pakej</span><strong>${money(r.totalCents)}</strong></li><li><span>Bayaran disahkan</span><strong>${money(r.verifiedCents)}</strong></li><li class="total"><span>Baki bayaran</span><strong>${money(r.outstandingCents)}</strong></li></ul>${r.overpaymentCents?`<p class="info-note">Lebihan ${money(r.overpaymentCents)} akan disemak urus setia. Tiada bayaran balik automatik.</p>`:''}<button class="add-guardian" id="edit-registration">Kemaskini waris / nombor telefon</button>${bankDetails()}${history(r)}<p class="info-note">Rujukan transaksi bank: <strong>${E(official.settings.bankReference)}</strong>. Bayar baki yang belum dijelaskan sahaja.</p><label class="field"><span>Resit bayaran tambahan atau terdahulu</span><input id="return-receipt" type="file" accept="image/png,image/jpeg,application/pdf"></label><label class="field"><span>Amaun dalam resit ini (RM)</span><input id="return-amount" type="number" inputmode="decimal" min="0.01" step="0.01" value="${(r.outstandingCents/100).toFixed(2)}"></label><div class="payment-options"><button class="button button-navy" id="return-upload">MUAT NAIK RESIT</button><button class="button button-plain" id="return-guide">PANDUAN PAKAIAN MAJLIS</button></div>`));bindCopies();
+  showDialog(panel('Pendaftaran anda.','Semak bayaran, kemas kini waris atau muat naik resit di sini.',`<div class="return-heading"><h3>${E(r.student.name)}</h3><span class="class-badge">Kelas ${E(r.student.className)}</span></div><section id="diet-panel" class="diet-panel" aria-label="Pilihan hidangan keluarga"><h3>Hidangan vegetarian</h3><p role="status">Sedang memuatkan pilihan hidangan…</p></section>${paymentConfirmation(r)}${!r.seatsHeld&&r.guardians.length?'<p class="form-message">Tempahan waris telah dilepaskan oleh urus setia. Tempahan semula tertakluk kepada baki kuota.</p>':''}<ul class="summary-list"><li><span>Waris</span><strong>${r.guardians.length} orang</strong></li><li><span>Jumlah pakej</span><strong>${money(r.totalCents)}</strong></li><li><span>Bayaran disahkan</span><strong>${money(r.verifiedCents)}</strong></li><li class="total"><span>Baki bayaran</span><strong>${money(r.outstandingCents)}</strong></li></ul>${r.overpaymentCents?`<p class="info-note">Lebihan ${money(r.overpaymentCents)} akan disemak urus setia. Tiada bayaran balik automatik.</p>`:''}<button class="add-guardian" id="edit-registration">Kemaskini waris / nombor telefon</button>${bankDetails()}${history(r)}<p class="info-note">Rujukan transaksi bank: <strong>${E(official.settings.bankReference)}</strong>. Bayar baki yang belum dijelaskan sahaja.</p><label class="field"><span>Resit bayaran tambahan atau terdahulu</span><input id="return-receipt" type="file" accept="image/png,image/jpeg,application/pdf"></label><label class="field"><span>Amaun dalam resit ini (RM)</span><input id="return-amount" type="number" inputmode="decimal" min="0.01" step="0.01" value="${(r.outstandingCents/100).toFixed(2)}"></label><div class="payment-options"><button class="button button-navy" id="return-upload">MUAT NAIK RESIT</button><button class="button button-plain" id="return-guide">PANDUAN PAKAIAN MAJLIS</button></div>`));bindCopies();
+  loadDiet(r);
   $('#open-pass')?.addEventListener('click',()=>run(showPass, 'Sedang menyediakan QR kehadiran…'));
   $('#edit-registration').onclick=()=>{draft={student:r.student,contactPhone:r.contactPhone,guardians:r.guardians.map(g=>({...g})),attending:r.guardians.length>0,updateKey:key(),reserveSeats:false};showGuardians(true);};
   let receiptKey=key();$('#return-upload').onclick=()=>run(async()=>{const payload=await receiptPayload($('#return-receipt').files[0],Math.round(Number($('#return-amount').value)*100),receiptKey);const result=await api('parent.receipt',payload,sessionToken);currentRegistration=result.registration;receiptKey=key();showDialog(panel('Resit berjaya diterima!','Terima kasih! Bukti pembayaran anda akan disemak oleh pihak urus setia.',`<p class="info-note">Muat naik resit tidak mengubah kuota atau mengesahkan bayaran secara automatik.</p><div class="flow-actions"><button class="button button-navy" id="receipt-continue">TERUSKAN KE PANDUAN PAKAIAN</button></div>`));$('#receipt-continue').onclick=()=>showGuide(true);refreshPublic({afterWrite:true}).catch(()=>{});}, 'Sedang memuat naik resit…');
   $('#return-guide').onclick=()=>showGuide(false);
+}
+async function loadDiet(registration) {
+  const target = $('#diet-panel');
+  try {
+    const {diet} = await api('parent.get', {section:'mealPreferences'}, sessionToken);
+    if (target?.isConnected && currentRegistration?.id === registration.id) renderDiet(target, diet);
+  } catch (e) {
+    if (!target?.isConnected) return;
+    target.innerHTML = `<h3>Hidangan vegetarian</h3><p role="alert">${E(e.message)}</p><button type="button" class="text-link" id="diet-retry">Cuba semula pilihan hidangan</button>`;
+    $('#diet-retry').onclick = () => loadDiet(registration);
+  }
+}
+function renderDiet(target, diet, justSaved = false) {
+  const status = !diet.answered ? (diet.closed ? 'Tiada maklum balas diterima. Dianggap tiada keperluan vegetarian.' : 'Belum dijawab — mohon beri maklum balas.')
+    : diet.vegetarianCount ? `${diet.vegetarianCount} hidangan vegetarian telah direkodkan.` : 'Direkodkan: tiada keperluan hidangan vegetarian.';
+  target.innerHTML = `<p class="eyebrow">PERSEDIAAN JAMUAN</p><h3>Hidangan vegetarian untuk keluarga anda</h3>
+    <p>Adakah graduan atau tetamu berdaftar memerlukan hidangan vegetarian?</p>
+    <p class="diet-status" role="status">${justSaved ? 'Jawapan berjaya disimpan. ' : ''}${E(status)}</p>
+    ${diet.needsReview ? '<p class="info-note">Senarai ahli keluarga telah berubah selepas jawapan disimpan. Sila semak semula pilihan hidangan.</p>' : ''}
+    <p class="quiet-note">Jawab sebelum <strong>29 November 2026, jam 12.00 tengah hari</strong>. Jika tiada maklum balas, kami menganggap tiada keperluan vegetarian.</p>
+    <form id="diet-form"><fieldset ${diet.closed ? 'disabled' : ''}><legend class="visually-hidden">Pilihan hidangan vegetarian</legend>
+      <div class="diet-choices"><label><input type="radio" name="diet-choice" value="NONE" ${diet.choice === 'NONE' ? 'checked' : ''} required> Tiada</label>
+      <label><input type="radio" name="diet-choice" value="VEGETARIAN" ${diet.choice === 'VEGETARIAN' ? 'checked' : ''} required> Ya, ada yang memerlukan</label></div>
+      <div id="diet-members" ${diet.choice === 'VEGETARIAN' ? '' : 'hidden'}><p><strong>Tandakan nama yang memerlukan vegetarian:</strong></p>
+      ${diet.people.map(p => `<label class="diet-person"><input type="checkbox" name="diet-person" value="${E(p.id)}" ${diet.personIds.includes(p.id) ? 'checked' : ''}><span>${E(p.name)}<small>${E(p.role)}</small></span></label>`).join('')}</div>
+      ${diet.closed ? '' : '<button type="submit" class="button button-navy">SIMPAN PILIHAN HIDANGAN</button>'}
+    </fieldset></form>${diet.closed ? '<p class="quiet-note">Tempoh maklum balas telah tamat. Untuk pembetulan, sila hubungi urus setia.</p>' : ''}`;
+  const form = target.querySelector('form');
+  form.onchange = () => {target.querySelector('#diet-members').hidden = form.elements['diet-choice'].value !== 'VEGETARIAN';};
+  form.onsubmit = e => {
+    e.preventDefault();
+    if (!form.reportValidity()) return;
+    run(async () => {
+      const choice = form.elements['diet-choice'].value;
+      const personIds = choice === 'NONE' ? [] : [...form.querySelectorAll('[name="diet-person"]:checked')].map(el => el.value);
+      if (choice === 'VEGETARIAN' && !personIds.length) throw new Error('Tandakan sekurang-kurangnya seorang yang memerlukan hidangan vegetarian.');
+      const {diet: saved} = await api('parent.update', {section:'mealPreferences',choice,personIds}, sessionToken);
+      renderDiet(target, saved, true);
+      toast('Pilihan hidangan berjaya disimpan.');
+    }, 'Sedang menyimpan pilihan hidangan…');
+  };
 }
 async function showPass(){
   const [{pass}, {drawPassQR}] = await Promise.all([api('parent.pass',{},sessionToken), import('./qr-display.js')]);
